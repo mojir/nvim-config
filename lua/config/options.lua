@@ -23,3 +23,5 @@ opt.undofile = true
 opt.undodir = vim.fn.stdpath('data') .. '/undo'
 opt.undolevels = 10000
 opt.undoreload = 10000
+
+opt.signcolumn = "auto:2"

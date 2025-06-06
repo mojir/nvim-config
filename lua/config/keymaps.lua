@@ -31,7 +31,8 @@ vim.keymap.set('n', '<leader>4', '<Cmd>BufferLineGoToBuffer 4<CR>', { desc = 'Go
 vim.keymap.set('n', '<leader>5', '<Cmd>BufferLineGoToBuffer 5<CR>', { desc = 'Go to buffer 5' })
 
 -- Buffer navigation with Alt+Tab
-vim.keymap.set('n', '<M-Tab>', ':BufferLineCycleNext<CR>', { noremap = true, silent = true, desc = 'Next buffer' })
+vim.keymap.set('n', ']b', ':BufferLineCycleNext<CR>', { noremap = true, silent = true, desc = 'Next buffer' })
+vim.keymap.set('n', '[b', ':BufferLineCycleNext<CR>', { noremap = true, silent = true, desc = 'Next buffer' })
 vim.keymap.set('n', '<M-S-Tab>', ':BufferLineCyclePrev<CR>', { noremap = true, silent = true, desc = 'Previous buffer' })
 
 -- Clipboard operations using + register
@@ -44,6 +45,11 @@ vim.keymap.set('n', '<leader>dd', '"+dd', { desc = 'Delete line to clipboard' })
 vim.keymap.set('n', '<leader>p', '"+p', { desc = 'Paste from clipboard after cursor' })
 vim.keymap.set('n', '<leader>P', '"+P', { desc = 'Paste from clipboard before cursor' })
 vim.keymap.set('v', '<leader>p', '"+p', { desc = 'Paste from clipboard' })
+
+-- Git status with Telescope
+vim.keymap.set('n', '<leader>gs', function()
+  require('telescope.builtin').git_status()
+end, { desc = 'Git status (Telescope)' })
 
 -- Load utility functions for diagnostics
 require("utils.diagnostic")

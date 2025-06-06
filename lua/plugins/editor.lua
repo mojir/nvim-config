@@ -54,9 +54,15 @@ return {
     "preservim/nerdcommenter",
     lazy = false,
     config = function()
-      vim.g.NERDCreateDefaultMappings = 1
+      -- Disable all default mappings
+      vim.g.NERDCreateDefaultMappings = 0
+
+      -- Keep your preferred settings
       vim.g.NERDCommentEmptyLines = 1
       vim.g.NERDSpaceDelims = 1
+
+      -- Create only the toggle mapping
+      vim.keymap.set({'n', 'v'}, '<leader>c<space>', '<plug>NERDCommenterToggle', { desc = 'Toggle comment' })
     end
   },
 
