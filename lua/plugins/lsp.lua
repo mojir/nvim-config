@@ -21,6 +21,7 @@ return {
       require('mason-lspconfig').setup({
         ensure_installed = {
           'ts_ls',
+          'vue_ls',
           'pyright',
           'bashls',
           'html',
@@ -69,7 +70,7 @@ return {
             end,
           })
         else
-          local servers = { 'ts_ls', 'pyright', 'bashls', 'html', 'cssls', 'emmet_ls' }
+          local servers = { 'pyright', 'bashls', 'html', 'cssls', 'emmet_ls' }
           for _, server in ipairs(servers) do
             if server == 'emmet_ls' then
               lspconfig[server].setup({
