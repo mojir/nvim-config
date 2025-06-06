@@ -2,7 +2,7 @@ return {
   -- File explorer
   {
     'nvim-tree/nvim-tree.lua',
-    lazy = true,
+    lazy = false,
     dependencies = {
       'nvim-tree/nvim-web-devicons',
     },
@@ -130,18 +130,22 @@ return {
             end
             return true
           end,
+          after_load = function(_)
+            -- Update nvim-tree root to the current working directory
+            local cwd = vim.fn.getcwd()
+            require('nvim-tree.api').tree.change_root(cwd)
+            require('nvim-tree.api').tree.reload()
+          end,
         },
         plugins = {
           close_windows = false,
           delete_hidden_buffers = false,
         },
       }
-      require('telescope').load_extension('possession')
 
       -- Session management keymaps
       vim.keymap.set('n', '<leader>ss', ':PossessionSave<CR>', { desc = 'Save session' })
-      vim.keymap.set('n', '<leader>sl', ':PossessionLoad<CR>', { desc = 'Load session' })
-      vim.keymap.set('n', '<leader>sf', '<cmd>Telescope possession list<CR>', { desc = 'Find sessions' })
+      vim.keymap.set('n', '<leader>sl', ':PossessionLoad ', { desc = 'Load session' })
       vim.keymap.set('n', '<leader>sd', ':PossessionDelete<CR>', { desc = 'Delete session' })
       vim.keymap.set('n', '<leader>sr', ':PossessionRename<CR>', { desc = 'Rename session' })
     end

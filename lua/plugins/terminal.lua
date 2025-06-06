@@ -10,7 +10,7 @@ return {
         shade_terminals = true,
         shading_factor = 2,
         start_in_insert = true,
-        insert_mappings = true,
+        insert_mappings = false,
         persist_size = true,
         direction = 'horizontal',
         close_on_exit = true,
@@ -19,10 +19,6 @@ return {
         on_create = function(_)
           vim.opt_local.scrolloff = 0
           vim.opt_local.sidescrolloff = 0
-        end,
-        on_close = function(term)
-          vim.bo[term.bufnr].buftype = 'nofile'
-          vim.bo[term.bufnr].modified = false
         end,
         float_opts = {
           border = 'curved',
