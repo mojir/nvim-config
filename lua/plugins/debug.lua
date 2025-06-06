@@ -127,6 +127,7 @@ return {
           program = "${workspaceFolder}/node_modules/vitest/vitest.mjs",
           args = {
             "run",
+            "--run",
             "--reporter=verbose",
             "${file}",
             "--no-coverage"
@@ -147,6 +148,7 @@ return {
           program = "${workspaceFolder}/node_modules/vitest/vitest.mjs",
           args = {
             "run",
+            "--run",
             "--reporter=verbose",
             "${relativeFile}",
             "--no-coverage"
@@ -169,6 +171,7 @@ return {
             local test_name = vim.fn.input("Test name pattern: ")
             return {
               "run",
+              "--run",
               "--reporter=verbose",
               "${file}",
               "--no-coverage",
