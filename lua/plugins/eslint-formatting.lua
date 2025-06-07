@@ -62,14 +62,14 @@ return {
           }),
         },
         on_attach = function(client, bufnr)
-          -- Format on save for JS/TS/Vue files
+          -- Format on save for JS/TS files
           if client.supports_method("textDocument/formatting") then
             vim.api.nvim_create_autocmd("BufWritePre", {
               buffer = bufnr,
               callback = function()
                 local ft = vim.bo[bufnr].filetype
                 if vim.tbl_contains({
-                  'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue'
+                  'javascript', 'javascriptreact', 'typescript', 'typescriptreact'
                 }, ft) then
                   vim.lsp.buf.format({
                     filter = function(c)
@@ -86,7 +86,7 @@ return {
           vim.keymap.set('n', '<leader>f', function()
             local ft = vim.bo.filetype
             if vim.tbl_contains({
-              'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue'
+              'javascript', 'javascriptreact', 'typescript', 'typescriptreact'
             }, ft) then
               vim.lsp.buf.format({
                 filter = function(c)
