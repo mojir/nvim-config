@@ -25,3 +25,6 @@ opt.undolevels = 10000
 opt.undoreload = 10000
 
 opt.signcolumn = "auto:2"
+
+vim.o.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
+

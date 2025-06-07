@@ -37,7 +37,7 @@ return {
       require("bufferline").setup({
         options = {
           mode = "buffers",
-          numbers = "none",
+          numbers = "ordinal",
           close_command = "bdelete! %d",
           right_mouse_command = "bdelete! %d",
           left_mouse_command = "buffer %d",

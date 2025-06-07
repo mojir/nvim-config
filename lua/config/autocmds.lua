@@ -36,3 +36,10 @@ vim.api.nvim_create_autocmd({"BufEnter", "BufWritePost", "LspAttach"}, {
     end
   end,
 })
+
+-- Force disable comment continuation on every buffer
+vim.api.nvim_create_autocmd("BufEnter", {
+  callback = function()
+    vim.opt_local.formatoptions:remove({ 'o' })
+  end,
+})
