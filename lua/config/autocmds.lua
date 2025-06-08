@@ -8,16 +8,6 @@ vim.api.nvim_create_autocmd({"FocusLost", "BufLeave", "CursorHold", "CursorHoldI
   end,
 })
 
--- Auto-remove trailing spaces on save instead of showing warnings
-vim.api.nvim_create_autocmd("BufWritePre", {
-  pattern = "*",
-  callback = function()
-    local save_cursor = vim.fn.getpos(".")
-    vim.cmd([[%s/\s\+$//e]])
-    vim.fn.setpos(".", save_cursor)
-  end,
-})
-
 -- Clear duplicate tracking when diagnostics are refreshed
 vim.api.nvim_create_autocmd({"BufEnter", "BufWritePost", "LspAttach"}, {
   callback = function(args)
