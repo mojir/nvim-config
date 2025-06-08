@@ -1,33 +1,4 @@
 return {
-  -- Colorscheme
-  {
-    'catppuccin/nvim',
-    name = 'catppuccin',
-    priority = 1000,
-    config = function()
-      require('catppuccin').setup({
-        flavour = 'mocha',
-        transparent_background = false,
-        integrations = {
-          nvimtree = true,
-          telescope = true,
-          gitsigns = true,
-          bufferline = true,
-        },
-      })
-      vim.cmd.colorscheme('catppuccin')
-    end
-  },
-
-  -- Status line
-  {
-    'nvim-lualine/lualine.nvim',
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
-    config = function()
-      require('lualine').setup()
-    end
-  },
-
   -- Buffer line
   {
     'akinsho/bufferline.nvim',
@@ -36,12 +7,10 @@ return {
     config = function()
       require("bufferline").setup({
         options = {
-          mode = "buffers",
           numbers = "ordinal",
           close_command = "bdelete! %d",
           right_mouse_command = "bdelete! %d",
           left_mouse_command = "buffer %d",
-          middle_mouse_command = nil,
           indicator = {
             icon = '▎',
             style = 'icon',
@@ -52,12 +21,7 @@ return {
           left_trunc_marker = '',
           right_trunc_marker = '',
           diagnostics = "nvim_lsp",
-          show_buffer_icons = true,
-          show_buffer_close_icons = true,
-          show_close_icon = true,
-          show_tab_indicators = true,
           separator_style = "slant",
-          always_show_bufferline = true,
           hover = {
             enabled = true,
             delay = 200,
@@ -92,5 +56,6 @@ return {
         }
       })
     end
-  },
+  }
 }
+

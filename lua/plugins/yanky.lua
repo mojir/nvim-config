@@ -32,10 +32,6 @@ return {
       vim.keymap.set({"n","x"}, "p", "<Plug>(YankyPutAfter)", { desc = 'Put after' })
       vim.keymap.set({"n","x"}, "P", "<Plug>(YankyPutBefore)", { desc = 'Put before' })
       
-      -- Cycle through yank history after pasting
-      vim.keymap.set("n", "<C-p>", "<Plug>(YankyPreviousEntry)", { desc = 'Previous yank' })
-      vim.keymap.set("n", "<C-n>", "<Plug>(YankyNextEntry)", { desc = 'Next yank' })
-
       -- Open yank history in Telescope
       vim.keymap.set('n', '<leader>fy', '<cmd>Telescope yank_history<cr>', { desc = 'Yank history' })
     end,

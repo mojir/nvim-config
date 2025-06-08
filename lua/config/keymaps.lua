@@ -46,6 +46,14 @@ vim.keymap.set('n', '<leader>p', '"+p', { desc = 'Paste from clipboard after cur
 vim.keymap.set('n', '<leader>P', '"+P', { desc = 'Paste from clipboard before cursor' })
 vim.keymap.set('v', '<leader>p', '"+p', { desc = 'Paste from clipboard' })
 
+vim.keymap.set('n', '<leader>tq', function()
+  if vim.fn.getqflist({winid = 0}).winid ~= 0 then
+    vim.cmd('cclose')
+  else
+    vim.cmd('copen')
+  end
+end, { desc = 'Toggle quickfix' })
+
 -- Git status with Telescope
 vim.keymap.set('n', '<leader>gs', function()
   require('telescope.builtin').git_status()

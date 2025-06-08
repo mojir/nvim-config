@@ -87,15 +87,16 @@ function M.copy_all_diagnostics_on_line()
   print("Copied " .. #diagnostics .. " diagnostic(s)")
 end
 
-function M.copy_last_message()
+function M.copy_messages()
   local messages = vim.fn.execute('messages')
   vim.fn.setreg('+', messages)
+  vim.fn.setreg('"', messages)
   print("Messages copied to clipboard")
 end
 
 -- Set up keymaps for diagnostic functions
 vim.keymap.set('n', '<leader>cd', M.copy_diagnostic_under_cursor, { desc = 'Copy diagnostic under cursor' })
 vim.keymap.set('n', '<leader>cD', M.copy_all_diagnostics_on_line, { desc = 'Copy all diagnostics on line' })
-vim.keymap.set('n', '<leader>cm', M.copy_last_message, { desc = 'Copy messages to clipboard' })
+vim.keymap.set('n', '<leader>cm', M.copy_messages, { desc = 'Copy messages to clipboard' })
 
 return M

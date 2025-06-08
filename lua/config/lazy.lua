@@ -18,7 +18,11 @@ vim.opt.rtp:prepend(lazypath)
 -- Setup lazy.nvim
 require("lazy").setup({
   spec = {
-    { import = "plugins" }, -- This will load all files in lua/plugins/
+    { import = "plugins" },
+    { import = "plugins.editor" },
+    { import = "plugins.lang" },
+    { import = "plugins.copilot" },
+    { import = "plugins.ui" },
   },
   install = { colorscheme = { "habamax" } },
   checker = { enabled = true },

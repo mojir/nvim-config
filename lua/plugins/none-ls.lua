@@ -1,5 +1,4 @@
--- Replace your eslint-formatting.lua with this:
--- lua/plugins/eslint-formatting.lua
+-- eslint-formatting
 
 return {
   -- none-ls for eslint_d integration
