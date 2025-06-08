@@ -8,6 +8,27 @@ return {
     },
     config = function()
       require("nvim-tree").setup({
+        on_attach = function(bufnr)
+          local api = require('nvim-tree.api')
+
+          -- Apply all default mappings first
+          api.config.mappings.default_on_attach(bufnr)
+
+          -- Override <C-]> to show a helpful message instead of the tag error
+          vim.keymap.set('n', '<C-]>', function()
+            print("This action is disabled in nvim-tree")
+          end, { buffer = bufnr, desc = 'Disabled', silent = true })
+
+          -- You can also override other keys you don't want
+          vim.keymap.set('n', 'cd', function()
+            print("Directory change disabled")
+          end, { buffer = bufnr, desc = 'Disabled', silent = true })
+
+          vim.keymap.set('n', 'C', function()
+            print("Root change disabled")
+          end, { buffer = bufnr, desc = 'Disabled', silent = true })
+        end,
+
         filters = {
           dotfiles = false,
           git_clean = false,
@@ -27,6 +48,16 @@ return {
             show = {
               git = true,
             },
+          },
+        },
+
+        sync_root_with_cwd = false,  -- Don't change nvim-tree root when cwd changes
+        respect_buf_cwd = false,     -- Don't change root based on buffer's directory
+        actions = {
+          change_dir = {
+            enable = false,          -- Disable 'cd' action in nvim-tree
+            global = false,          -- Don't change global working directory
+            restrict_above_cwd = true,
           },
         },
         -- NEW: Auto-sync with current buffer
@@ -268,5 +299,22 @@ return {
       vim.keymap.set('n', '<leader>hp', function() harpoon:list():prev() end, { desc = 'Harpoon previous' })
       vim.keymap.set('n', '<leader>hn', function() harpoon:list():next() end, { desc = 'Harpoon next' })
     end,
+  },
+  -- Add to your plugins/editor.lua or create plugins/mini.lua
+  {
+    'echasnovski/mini.bufremove',
+    config = function()
+      require('mini.bufremove').setup()
+
+      -- Replace your existing <leader>bd mapping
+      vim.keymap.set('n', '<leader>bd', function()
+        require('mini.bufremove').delete(0, false)
+      end, { desc = 'Delete buffer (smart)' })
+
+      -- Optional: Force delete (ignores unsaved changes)
+      vim.keymap.set('n', '<leader>bD', function()
+        require('mini.bufremove').delete(0, true)
+      end, { desc = 'Delete buffer (force)' })
+    end
   }
 }

@@ -10,8 +10,11 @@ return {
 
       -- Essential keymaps
       vim.keymap.set('n', '<leader>S', '<cmd>lua require("spectre").toggle()<CR>', { desc = "Toggle Spectre" })
-      vim.keymap.set('n', '<leader>sw', '<cmd>lua require("spectre").open_visual({select_word=true})<CR>', { desc = "Search current word" })
-      vim.keymap.set('v', '<leader>sw', '<esc><cmd>lua require("spectre").open_visual()<CR>', { desc = "Search selection" })
+      vim.keymap.set('v', '<leader>S', '<esc><cmd>lua require("spectre").open_visual()<CR>', { desc = "Search selection" })
+
+      vim.keymap.set('n', '<leader>sb', '<cmd>lua require("spectre").open_file_search()<CR>', { desc = "Search/replace in current buffer" })
+      vim.keymap.set('v', '<leader>sb', '<esc><cmd>lua require("spectre").open_file_search()<CR>', { desc = "Search selection in current buffer" })
+
     end,
   }
 }

@@ -9,7 +9,7 @@ return {
       vim.g.copilot_no_tab_map = true
       
       -- Set up custom keymaps
-      vim.keymap.set('i', '<C-g>', 'copilot#Accept("\\<CR>")', {
+      vim.keymap.set('i', '<C-l>', 'copilot#Accept("\\<CR>")', {
         expr = true,
         replace_keycodes = false,
         desc = 'Accept Copilot suggestion'

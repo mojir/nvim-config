@@ -17,7 +17,6 @@ for key, cmd in pairs(nav_maps) do
 end
 
 -- Buffer/tab navigation with bufferline
-vim.keymap.set('n', '<leader>bd', ':bd<CR>', { noremap = true, desc = 'Close current buffer' })
 vim.keymap.set('n', '<leader>bc', ':BufferLineCloseRight<CR>:BufferLineCloseLeft<CR>', { noremap = true, desc = 'Close all but current' })
 vim.keymap.set('n', '<leader>ls', ':ls<CR>', { noremap = true })
 
