@@ -52,21 +52,6 @@ return {
 
       vim.cmd('autocmd! TermOpen term://* lua set_terminal_keymaps()')
 
-      -- Fixed TermClose autocmd with proper error handling
-      vim.api.nvim_create_autocmd("TermClose", {
-        callback = function(args)
-          local bufnr = args.buf
-          -- Check if buffer is valid before trying to modify it
-          if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
-            -- Use pcall to safely set buffer options
-            pcall(function()
-              vim.bo[bufnr].modified = false
-              vim.bo[bufnr].buftype = 'nofile'
-            end)
-          end
-        end,
-      })
-
       local Terminal = require('toggleterm.terminal').Terminal
 
       local float_term = Terminal:new({

@@ -46,6 +46,12 @@ vim.keymap.set('n', '<leader>p', '"+p', { desc = 'Paste from clipboard after cur
 vim.keymap.set('n', '<leader>P', '"+P', { desc = 'Paste from clipboard before cursor' })
 vim.keymap.set('v', '<leader>p', '"+p', { desc = 'Paste from clipboard' })
 
+-- Map mouse back/forward to jump list navigation
+vim.keymap.set('n', '<X1Mouse>', '<C-o>', { desc = 'Jump back' })
+vim.keymap.set('n', '<X2Mouse>', '<C-i>', { desc = 'Jump forward' })
+vim.keymap.set('n', '<2-X1Mouse>', '<C-o>', { desc = 'Jump back (double)' })
+vim.keymap.set('n', '<2-X2Mouse>', '<C-i>', { desc = 'Jump forward (double)' })
+
 vim.keymap.set('n', '<leader>tq', function()
   if vim.fn.getqflist({winid = 0}).winid ~= 0 then
     vim.cmd('cclose')

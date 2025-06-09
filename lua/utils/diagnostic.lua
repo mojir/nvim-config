@@ -5,34 +5,6 @@ vim.diagnostic.config({
   virtual_text = {
     prefix = '●',
     source = "if_many",
-    format = function(diagnostic)
-      if diagnostic.message and diagnostic.message:lower():match("trailing") then
-        return nil
-      end
-
-      local key = string.format("%d:%d:%s",
-        diagnostic.lnum,
-        diagnostic.col,
-        diagnostic.message
-      )
-
-      if not _G.diagnostic_tracker then
-        _G.diagnostic_tracker = {
-          seen = {},
-          buffer_generation = {}
-        }
-      end
-
-      local bufnr = vim.api.nvim_get_current_buf()
-      local buffer_key = bufnr .. ":" .. key
-
-      if _G.diagnostic_tracker.seen[buffer_key] then
-        return nil
-      end
-
-      _G.diagnostic_tracker.seen[buffer_key] = true
-      return diagnostic.message
-    end,
   },
   signs = {
     text = {

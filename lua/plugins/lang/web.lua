@@ -40,22 +40,6 @@ return {
     end
   },
 
-  -- JSON schema support
-  {
-    'b0o/schemastore.nvim',
-    ft = 'json',
-    config = function()
-      require('lspconfig').jsonls.setup({
-        settings = {
-          json = {
-            schemas = require('schemastore').json.schemas(),
-            validate = { enable = true },
-          },
-        },
-      })
-    end
-  },
-
   -- Package.json info
   {
     'vuki656/package-info.nvim',

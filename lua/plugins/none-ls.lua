@@ -6,7 +6,8 @@ return {
     'nvimtools/none-ls.nvim',
     dependencies = {
       'nvim-lua/plenary.nvim',
-      'nvimtools/none-ls-extras.nvim' -- Required for eslint_d support
+      'nvimtools/none-ls-extras.nvim', -- Required for eslint_d support
+      'jay-babu/mason-null-ls.nvim',
     },
     config = function()
       local null_ls = require('null-ls')

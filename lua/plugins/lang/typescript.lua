@@ -16,6 +16,11 @@ return {
           tsserver_file_preferences = {},
         },
       })
+      -- Add to the config function in typescript.lua
+      -- vim.keymap.set('n', '<leader>to', '<cmd>TSToolsOrganizeImports<cr>', { desc = 'Organize imports' })
+      -- vim.keymap.set('n', '<leader>tu', '<cmd>TSToolsRemoveUnused<cr>', { desc = 'Remove unused imports' })
+      -- vim.keymap.set('n', '<leader>tf', '<cmd>TSToolsFixAll<cr>', { desc = 'Fix all issues' })
+      -- vim.keymap.set('n', '<leader>tr', '<cmd>TSToolsRenameFile<cr>', { desc = 'Rename file' })
     end
   },
 }

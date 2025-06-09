@@ -9,6 +9,10 @@ return {
     config = function()
       -- Function to update iTerm window title
       local function update_iterm_title()
+        if not os.getenv("TERM_PROGRAM") or os.getenv("TERM_PROGRAM") ~= "iTerm.app" then
+          return
+        end
+
         local current_session = vim.v.this_session
 
         if current_session and current_session ~= '' then

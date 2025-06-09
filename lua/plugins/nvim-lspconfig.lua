@@ -4,6 +4,7 @@ return {
     dependencies = {
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
+      'b0o/schemastore.nvim',
     },
     config = function()
       -- Mason setup
@@ -20,7 +21,8 @@ return {
 
       require('mason-lspconfig').setup({
         ensure_installed = {
-          'ts_ls',
+          -- 'ts_ls',
+          'jsonls',
           'pyright',
           'bashls',
           'html',
@@ -32,6 +34,21 @@ return {
 
       local lspconfig = require('lspconfig')
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
+      local server_configs = {
+        jsonls = {
+          capabilities = capabilities,
+          settings = {
+            json = {
+              schemas = require('schemastore').json.schemas(),
+              validate = { enable = true },
+            },
+          },
+        },
+        emmet_ls = {
+          capabilities = capabilities,
+          filetypes = { 'html', 'css', 'scss', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+        },
+      }
 
       -- Lua LSP setup
       lspconfig.lua_ls.setup({
@@ -63,13 +80,13 @@ return {
               if server_name == "lua_ls" then
                 return
               end
-              lspconfig[server_name].setup({
-                capabilities = capabilities,
-              })
+              local config = server_configs[server_name] or { capabilities = capabilities }
+              lspconfig[server_name].setup(config)
             end,
           })
         else
-          local servers = { 'pyright', 'bashls', 'html', 'cssls', 'emmet_ls', 'ts_ls' }
+          -- local servers = { 'pyright', 'bashls', 'html', 'cssls', 'emmet_ls', 'ts_ls' }
+          local servers = { 'pyright', 'bashls', 'html', 'cssls', 'emmet_ls', 'jsonls' }
           for _, server in ipairs(servers) do
             if server == 'emmet_ls' then
               lspconfig[server].setup({
@@ -106,9 +123,6 @@ return {
           -- Actions
           vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
           vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, opts)
-          vim.keymap.set('n', '<leader>f', function()
-            vim.lsp.buf.format { async = true }
-          end, opts)
 
           -- Diagnostics
           vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, opts)
