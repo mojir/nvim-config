@@ -28,6 +28,14 @@ return {
           end, { buffer = bufnr, desc = 'Disabled', silent = true })
         end,
 
+        view = {
+          width = {
+            min = 30,
+            max = 100,
+          },
+          side = "left",
+        },
+
         filters = {
           dotfiles = false,
           git_clean = false,
@@ -75,6 +83,7 @@ return {
           },
         },
       })
+
 
       vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
       vim.keymap.set('n', '<leader>tg', function()

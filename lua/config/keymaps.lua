@@ -109,4 +109,41 @@ vim.api.nvim_create_user_command('CloseOutsideRoot', close_buffers_outside_root,
   desc = 'Close all file buffers outside nvim-tree root directory'
 })
 
+local function diff_two_files()
+  local file1 = nil
+  
+  -- First file selection
+  require('telescope.builtin').find_files({
+    prompt_title = "Select first file",
+    attach_mappings = function(_, map)
+      map('i', '<CR>', function(prompt_bufnr)
+        local selection = require('telescope.actions.state').get_selected_entry()
+        file1 = selection.path
+        require('telescope.actions').close(prompt_bufnr)
+        
+        -- Second file selection
+        vim.defer_fn(function()
+          require('telescope.builtin').find_files({
+            prompt_title = "Select second file",
+            attach_mappings = function(_, map2)
+              map2('i', '<CR>', function(prompt_bufnr2)
+                local selection2 = require('telescope.actions.state').get_selected_entry()
+                require('telescope.actions').close(prompt_bufnr2)
+                
+                -- Open diff
+                vim.cmd('tabnew')
+                vim.cmd('edit ' .. file1)
+                vim.cmd('vsplit ' .. selection2.path)
+                vim.cmd('windo diffthis')
+              end)
+              return true
+            end
+          })
+        end, 100)
+      end)
+      return true
+    end
+  })
+end
 
+vim.keymap.set('n', '<leader>d2', diff_two_files, { desc = 'Diff two files (Telescope)' })

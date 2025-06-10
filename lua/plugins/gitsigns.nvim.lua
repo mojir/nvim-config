@@ -42,19 +42,33 @@ return {
           end, {expr=true})
 
           -- Actions
-          map('n', '<leader>hs', gs.stage_hunk)
-          map('n', '<leader>hr', gs.reset_hunk)
-          map('n', '<leader>hS', gs.stage_buffer)
-          map('n', '<leader>hu', gs.undo_stage_hunk)
-          map('n', '<leader>hR', gs.reset_buffer)
-          map('n', '<leader>hp', gs.preview_hunk)
-          map('n', '<leader>hb', function() gs.blame_line{full=true} end)
-          -- map('n', '<leader>tb', gs.toggle_current_line_blame)
-          map('n', '<leader>hd', gs.diffthis)
-          map('n', '<leader>hD', function() gs.diffthis('~') end)
-          -- map('n', '<leader>td', gs.toggle_deleted)
+          map('n', '<leader>ga', gs.stage_hunk)
+          map('n', '<leader>gA', gs.stage_buffer)
+          map('n', '<leader>gr', gs.undo_stage_hunk)
+          map('n', '<leader>gx', gs.reset_hunk)
+          map('n', '<leader>gX', gs.reset_buffer)
+          map('n', '<leader>gp', gs.preview_hunk)
+          map('n', '<leader>gb', function() gs.blame_line{full=true} end)
+          map('n', '<leader>gB', gs.toggle_current_line_blame)
+          map('n', '<leader>gd', gs.diffthis)
+          map('n', '<leader>gD', function() gs.diffthis('~') end)
+          map('n', '<leader>gx', gs.toggle_deleted)
+          map('n', '<leader>gg', gs.refresh)
         end
       })
+
+      vim.keymap.set('n', '<leader>gR', function()
+        local current_file = vim.fn.expand('%:p')
+        if current_file == '' then
+          print("No file to unstage")
+          return
+        end
+
+        -- Use git to unstage the file
+        vim.fn.system('git reset HEAD -- ' .. vim.fn.shellescape(current_file))
+        require('gitsigns').refresh()
+        print("Unstaged: " .. vim.fn.fnamemodify(current_file, ':t'))
+      end, { desc = 'Unstage entire buffer' })
     end
   },
 }

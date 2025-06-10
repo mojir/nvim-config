@@ -33,3 +33,15 @@ vim.api.nvim_create_autocmd("BufEnter", {
     vim.opt_local.formatoptions:remove({ 'o' })
   end,
 })
+
+vim.api.nvim_create_autocmd({"VimEnter", "DirChanged"}, {
+  callback = function()
+    if not os.getenv("TERM_PROGRAM") then
+      return
+    end
+
+    local cwd = vim.fn.fnamemodify(vim.fn.getcwd(), ':~')
+    io.write('\027]0;' .. 'NeoVim@' .. cwd .. '\007')
+    io.flush()
+  end,
+})

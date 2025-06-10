@@ -1,22 +1,16 @@
 return {
   {
     'linux-cultist/venv-selector.nvim',
-    ft = 'python',
+    branch = 'regexp', -- Use the new branch
     dependencies = {
       'neovim/nvim-lspconfig',
-      'nvim-telescope/telescope.nvim',
-      'mfussenegger/nvim-dap-python'
+      'mfussenegger/nvim-dap-python',
+      { 'nvim-telescope/telescope.nvim', branch = '0.1.x', optional = true },
     },
+    lazy = false,
     config = function()
-      require('venv-selector').setup({
-        name = {
-          'venv',
-          '.venv',
-          'env',
-          '.env',
-        },
-      })
+      require('venv-selector').setup({})
       vim.keymap.set('n', '<leader>vs', '<cmd>VenvSelect<cr>', { desc = 'Select Python venv' })
-    end
+    end,
   },
 }
