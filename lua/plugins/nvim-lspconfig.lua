@@ -22,12 +22,13 @@ return {
       require('mason-lspconfig').setup({
         ensure_installed = {
           -- 'ts_ls',
-          'jsonls',
-          'pyright',
           'bashls',
-          'html',
           'cssls',
           'emmet_ls',
+          'html',
+          'jsonls',
+          'marksman',
+          'pyright',
         },
         automatic_enable = false,
       })

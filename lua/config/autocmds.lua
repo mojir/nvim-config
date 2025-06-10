@@ -45,3 +45,12 @@ vim.api.nvim_create_autocmd({"VimEnter", "DirChanged"}, {
     io.flush()
   end,
 })
+
+
+-- Set filetype for .conf and .config files to dosini
+vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+  pattern = {"*.conf", "*.config"},
+  callback = function()
+    vim.bo.filetype = "config"
+  end,
+})
