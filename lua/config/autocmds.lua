@@ -46,6 +46,21 @@ vim.api.nvim_create_autocmd({"VimEnter", "DirChanged"}, {
   end,
 })
 
+-- Reset window title when exiting NeoVim
+vim.api.nvim_create_autocmd({"VimLeave"}, {
+  callback = function()
+    local term = os.getenv("TERM") or ""
+    if term == "" then
+      return
+    end
+
+    -- Reset to just the current directory name
+    local cwd = vim.fn.fnamemodify(vim.fn.getcwd(), ':t')
+    io.write('\027]0;' .. cwd .. '\007')
+    io.flush()
+  end,
+})
+
 
 -- Set filetype for .conf and .config files to dosini
 vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {

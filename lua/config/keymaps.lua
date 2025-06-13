@@ -20,16 +20,31 @@ end
 vim.keymap.set('n', '<leader>bc', ':BufferLineCloseRight<CR>:BufferLineCloseLeft<CR>', { noremap = true, desc = 'Close all but current' })
 vim.keymap.set('n', '<leader>ls', ':ls<CR>', { noremap = true })
 
--- Quick buffer switching with numbers
-vim.keymap.set('n', '<leader>1', '<Cmd>BufferLineGoToBuffer 1<CR>', { desc = 'Go to buffer 1' })
-vim.keymap.set('n', '<leader>2', '<Cmd>BufferLineGoToBuffer 2<CR>', { desc = 'Go to buffer 2' })
-vim.keymap.set('n', '<leader>3', '<Cmd>BufferLineGoToBuffer 3<CR>', { desc = 'Go to buffer 3' })
-vim.keymap.set('n', '<leader>4', '<Cmd>BufferLineGoToBuffer 4<CR>', { desc = 'Go to buffer 4' })
-vim.keymap.set('n', '<leader>5', '<Cmd>BufferLineGoToBuffer 5<CR>', { desc = 'Go to buffer 5' })
-vim.keymap.set('n', '<leader>6', '<Cmd>BufferLineGoToBuffer 6<CR>', { desc = 'Go to buffer 6' })
-vim.keymap.set('n', '<leader>7', '<Cmd>BufferLineGoToBuffer 7<CR>', { desc = 'Go to buffer 7' })
-vim.keymap.set('n', '<leader>8', '<Cmd>BufferLineGoToBuffer 8<CR>', { desc = 'Go to buffer 8' })
-vim.keymap.set('n', '<leader>9', '<Cmd>BufferLineGoToBuffer 9<CR>', { desc = 'Go to buffer 9' })
+-- Quick buffer switching with numbers (reliable)
+for i = 1, 9 do
+  vim.keymap.set('n', '<leader>' .. i, function()
+    -- Get the buffer ID at position i in bufferline
+    local buffers = require('bufferline.state').components
+    if buffers[i] and buffers[i].id then
+      vim.cmd('buffer ' .. buffers[i].id)
+    else
+      print('No buffer at position ' .. i)
+    end
+  end, { desc = 'Go to buffer ' .. i })
+end
+
+vim.keymap.set('n', 'gp', function()
+  local start_mark = vim.api.nvim_buf_get_mark(0, '[')
+  local end_mark = vim.api.nvim_buf_get_mark(0, ']')
+  
+  if start_mark[1] > 0 and end_mark[1] > 0 then
+    vim.api.nvim_win_set_cursor(0, start_mark)
+    vim.cmd('normal! v')
+    vim.api.nvim_win_set_cursor(0, end_mark)
+  else
+    print("No recent paste to select")
+  end
+end, { desc = 'Select last pasted text' })
 
 -- Buffer navigation with tab key
 vim.keymap.set('n', '<Tab>', ':BufferLineCycleNext<CR>', { noremap = true, silent = true, desc = 'Next buffer' })
@@ -51,6 +66,10 @@ vim.keymap.set('n', '<X1Mouse>', '<C-o>', { desc = 'Jump back' })
 vim.keymap.set('n', '<X2Mouse>', '<C-i>', { desc = 'Jump forward' })
 vim.keymap.set('n', '<2-X1Mouse>', '<C-o>', { desc = 'Jump back (double)' })
 vim.keymap.set('n', '<2-X2Mouse>', '<C-i>', { desc = 'Jump forward (double)' })
+
+-- For my muscle memory, map ,c<space> to gc
+vim.keymap.set('n', '<leader>c<space>', 'gcc', { desc = 'Toggle comment line', remap = true })
+vim.keymap.set('v', '<leader>c<space>', 'gc', { desc = 'Toggle comment selection', remap = true })
 
 vim.keymap.set('n', '<leader>tq', function()
   if vim.fn.getqflist({winid = 0}).winid ~= 0 then

@@ -83,7 +83,7 @@ return {
           end
 
           -- Hotkey for manual formatting
-          vim.keymap.set('n', '<leader>f', function()
+          vim.keymap.set('n', '<leader>fo', function()
             local ft = vim.bo.filetype
             if vim.tbl_contains({
               'javascript', 'javascriptreact', 'typescript', 'typescriptreact'
@@ -125,7 +125,7 @@ return {
           end, { buffer = bufnr, desc = 'ESLint: Organize imports' })
 
           -- Format selection
-          vim.keymap.set('v', '<leader>f', function()
+          vim.keymap.set('v', '<leader>fo', function()
             vim.lsp.buf.format({
               filter = function(c)
                 return c.name == "null-ls"

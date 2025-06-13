@@ -80,6 +80,11 @@ return {
         require('auto-session.session-lens').search_session({})
       end, { desc = 'Pick session (Telescope)' })
 
+      -- Explicit session save
+      vim.keymap.set('n', '<leader>ss', function()
+        require('auto-session').SaveSession()
+      end, { desc = 'Save current session' })
+      
       -- Load the telescope extension (built-in)
       vim.defer_fn(function()
         if pcall(require, 'telescope') then

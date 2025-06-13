@@ -66,7 +66,7 @@ return {
               checkThirdParty = false,
             },
             telemetry = { enable = false },
-            format = { enable = false },
+            format = { enable = true },
           },
         },
       })

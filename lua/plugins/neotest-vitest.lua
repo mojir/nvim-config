@@ -117,7 +117,7 @@ return {
             },
             dap = {
               justMyCode = false,
-              console = "integratedTerminal",
+              adapter = 'pwa-node',
             },
           }),
         },
