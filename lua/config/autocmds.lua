@@ -33,7 +33,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
   end,
 })
 
-vim.api.nvim_create_autocmd({ "VimEnter", "DirChanged" }, {
+vim.api.nvim_create_autocmd({ "VimEnter", "DirChanged", "FocusGained" }, {
   callback = function()
     if not os.getenv("TERM_PROGRAM") then
       return
