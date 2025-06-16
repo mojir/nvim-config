@@ -190,6 +190,11 @@ local function smart_format()
     })
     print("Formatted with ESLint")
   elseif ft == "lua" then
+    -- Save the buffer first if modified
+    if vim.bo.modified then
+      vim.cmd("silent write")
+    end
+
     local view = vim.fn.winsaveview()
     vim.cmd("silent !stylua --config-path ~/.config/stylua/stylua.toml %")
     vim.cmd("keepmarks edit!")
