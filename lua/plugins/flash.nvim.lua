@@ -3,10 +3,10 @@
 
 return {
   {
-    'folke/flash.nvim',
+    "folke/flash.nvim",
     event = "VeryLazy",
     config = function()
-      require('flash').setup({
+      require("flash").setup({
         -- Basic flash settings
         labels = "asdfghjklqwertyuiopzxcvbnm",
         search = {
@@ -54,19 +54,54 @@ return {
     end,
     keys = {
       -- Main flash jump - replaces traditional search
-      { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
-      
+      {
+        "s",
+        mode = { "n", "x", "o" },
+        function()
+          require("flash").jump()
+        end,
+        desc = "Flash",
+      },
+
       -- Treesitter-based jumping (smart code navigation)
-      { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
-      
+      {
+        "S",
+        mode = { "n", "x", "o" },
+        function()
+          require("flash").treesitter()
+        end,
+        desc = "Flash Treesitter",
+      },
+
       -- Remote flash (for operators like d, c, y)
-      { "r", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
-      
+      {
+        "r",
+        mode = "o",
+        function()
+          require("flash").remote()
+        end,
+        desc = "Remote Flash",
+      },
+
       -- Treesitter search (visual/operator pending)
-      { "R", mode = { "o", "x" }, function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
-      
+      {
+        "R",
+        mode = { "o", "x" },
+        function()
+          require("flash").treesitter_search()
+        end,
+        desc = "Treesitter Search",
+      },
+
       -- Toggle flash in command mode search
-      { "<c-s>", mode = { "c" }, function() require("flash").toggle() end, desc = "Toggle Flash Search" },
+      {
+        "<c-s>",
+        mode = { "c" },
+        function()
+          require("flash").toggle()
+        end,
+        desc = "Toggle Flash Search",
+      },
     },
   },
 }

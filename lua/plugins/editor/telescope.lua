@@ -1,15 +1,15 @@
 return {
   -- Fuzzy finder
   {
-    'nvim-telescope/telescope.nvim',
-    branch = '0.1.x',
-    dependencies = { 
-      'nvim-lua/plenary.nvim',
+    "nvim-telescope/telescope.nvim",
+    branch = "0.1.x",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
       {
-        'nvim-telescope/telescope-live-grep-args.nvim',
+        "nvim-telescope/telescope-live-grep-args.nvim",
         config = function()
-          require('telescope').load_extension('live_grep_args')
-        end
+          require("telescope").load_extension("live_grep_args")
+        end,
       },
     },
     config = function()
@@ -26,27 +26,27 @@ return {
           hidden = true,
           defaults = {
             history = {
-              path = vim.fn.stdpath('data') .. '/telescope_history', 
+              path = vim.fn.stdpath("data") .. "/telescope_history",
               limit = 100,
             },
           },
           mappings = {
             i = {
-              ["<C-p>"] = require('telescope.actions').cycle_history_prev,
-              ["<C-n>"] = require('telescope.actions').cycle_history_next,
+              ["<C-p>"] = require("telescope.actions").cycle_history_prev,
+              ["<C-n>"] = require("telescope.actions").cycle_history_next,
             },
           },
         },
         pickers = {
           live_grep = {
             additional_args = function()
-              return {"--hidden"}
-            end
+              return { "--hidden" }
+            end,
           },
           find_files = {
             hidden = true,
-            find_command = { "rg", "--files", "--hidden" }
-          }
+            find_command = { "rg", "--files", "--hidden" },
+          },
         },
         extensions = {
           live_grep_args = {
@@ -62,34 +62,59 @@ return {
             -- theme = "dropdown", -- use dropdown theme
             -- theme = { }, -- use own theme spec
             -- layout_config = { mirror=true }, -- mirror preview pane
-          }
-        }
+          },
+        },
       })
 
-      telescope.load_extension('live_grep_args')
-      local builtin = require('telescope.builtin')
-      vim.keymap.set('n', '<leader>fm', '<cmd>Telescope marks<cr>', { desc = 'Show registers' })
-      vim.keymap.set('n', '<leader>fr', '<cmd>Telescope registers<cr>', { desc = 'Show registers' })
-      vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
-      vim.keymap.set('n', "<leader>fg", function()
-        require('telescope').extensions.live_grep_args.live_grep_args({
-          additional_args = function() return {"--hidden"} end
+      telescope.load_extension("live_grep_args")
+      local builtin = require("telescope.builtin")
+      vim.keymap.set("n", "<leader>fm", "<cmd>Telescope marks<cr>", { desc = "Show registers" })
+      vim.keymap.set("n", "<leader>fr", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
+      vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Telescope find files" })
+      vim.keymap.set("n", "<leader>fg", function()
+        require("telescope").extensions.live_grep_args.live_grep_args({
+          additional_args = function()
+            return { "--hidden" }
+          end,
         })
-      end, { desc = 'Live grep with args (including hidden)' })
+      end, { desc = "Live grep with args (including hidden)" })
 
-      vim.keymap.set('v', "<leader>fg", function()
+      vim.keymap.set("v", "<leader>fg", function()
         -- Simply yank the selection and get it from the default register
-        vim.cmd('normal! y')
+        vim.cmd("normal! y")
         local search_text = vim.fn.getreg('"')
 
-        require('telescope').extensions.live_grep_args.live_grep_args({
-          additional_args = function() return {"--hidden"} end,
-          default_text = search_text
+        require("telescope").extensions.live_grep_args.live_grep_args({
+          additional_args = function()
+            return { "--hidden" }
+          end,
+          default_text = search_text,
         })
-      end, { desc = 'Live grep with args (including hidden)' })
+      end, { desc = "Live grep with args (including hidden)" })
+      -- Search for word under cursor
+      vim.keymap.set("n", "<leader>fw", function()
+        local word = vim.fn.expand("<cword>")
+        require("telescope").extensions.live_grep_args.live_grep_args({
+          additional_args = function()
+            return { "--hidden" }
+          end,
+          default_text = word,
+        })
+      end, { desc = "Search word under cursor" })
 
-      vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
-      vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
-    end
-  }
+      -- Search for WORD under cursor
+      vim.keymap.set("n", "<leader>fW", function()
+        local word = vim.fn.expand("<cWORD>")
+        require("telescope").extensions.live_grep_args.live_grep_args({
+          additional_args = function()
+            return { "--hidden" }
+          end,
+          default_text = word,
+        })
+      end, { desc = "Search WORD under cursor" })
+
+      vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Telescope buffers" })
+      vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Telescope help tags" })
+    end,
+  },
 }

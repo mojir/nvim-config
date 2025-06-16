@@ -1,31 +1,31 @@
 return {
   {
-    'nvim-tree/nvim-tree.lua',
+    "nvim-tree/nvim-tree.lua",
     lazy = false,
     dependencies = {
-      'nvim-tree/nvim-web-devicons',
+      "nvim-tree/nvim-web-devicons",
     },
     config = function()
       require("nvim-tree").setup({
         on_attach = function(bufnr)
-          local api = require('nvim-tree.api')
+          local api = require("nvim-tree.api")
 
           -- Apply all default mappings first
           api.config.mappings.default_on_attach(bufnr)
 
           -- Override <C-]> to show a helpful message instead of the tag error
-          vim.keymap.set('n', '<C-]>', function()
+          vim.keymap.set("n", "<C-]>", function()
             print("This action is disabled in nvim-tree")
-          end, { buffer = bufnr, desc = 'Disabled', silent = true })
+          end, { buffer = bufnr, desc = "Disabled", silent = true })
 
           -- You can also override other keys you don't want
-          vim.keymap.set('n', 'cd', function()
+          vim.keymap.set("n", "cd", function()
             print("Directory change disabled")
-          end, { buffer = bufnr, desc = 'Disabled', silent = true })
+          end, { buffer = bufnr, desc = "Disabled", silent = true })
 
-          vim.keymap.set('n', 'C', function()
+          vim.keymap.set("n", "C", function()
             print("Root change disabled")
-          end, { buffer = bufnr, desc = 'Disabled', silent = true })
+          end, { buffer = bufnr, desc = "Disabled", silent = true })
         end,
 
         view = {
@@ -58,12 +58,12 @@ return {
           },
         },
 
-        sync_root_with_cwd = false,  -- Don't change nvim-tree root when cwd changes
-        respect_buf_cwd = false,     -- Don't change root based on buffer's directory
+        sync_root_with_cwd = false, -- Don't change nvim-tree root when cwd changes
+        respect_buf_cwd = false, -- Don't change root based on buffer's directory
         actions = {
           change_dir = {
-            enable = false,          -- Disable 'cd' action in nvim-tree
-            global = false,          -- Don't change global working directory
+            enable = false, -- Disable 'cd' action in nvim-tree
+            global = false, -- Don't change global working directory
             restrict_above_cwd = true,
           },
         },
@@ -84,18 +84,17 @@ return {
         },
       })
 
-
-      vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
-      vim.keymap.set('n', '<leader>tg', function()
-        local api = require('nvim-tree.api')
+      vim.api.nvim_set_keymap("n", "<C-n>", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
+      vim.keymap.set("n", "<leader>tg", function()
+        local api = require("nvim-tree.api")
         if api.tree.is_visible() then
           api.tree.find_file({ focus = true })
         else
           api.tree.open({ find_file = true })
         end
       end, {
-          desc = 'Toggle tree and find current file'
-        })
-    end
-  }
+        desc = "Toggle tree and find current file",
+      })
+    end,
+  },
 }

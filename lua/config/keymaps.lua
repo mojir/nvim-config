@@ -1,88 +1,93 @@
 -- Global keymaps that don't belong to specific plugins
 
 -- Simple keymap to quit all
-vim.keymap.set('n', '<leader>qa', ':qall<CR>', { desc = 'Quit all' })
+vim.keymap.set("n", "<leader>qa", ":qall<CR>", { desc = "Quit all" })
 
 -- Window navigation with Option+Arrow keys
 local nav_maps = {
-  ['<M-Left>'] = '<C-w>h',
-  ['<M-Right>'] = '<C-w>l',
-  ['<M-Up>'] = '<C-w>k',
-  ['<M-Down>'] = '<C-w>j'
+  ["<M-Left>"] = "<C-w>h",
+  ["<M-Right>"] = "<C-w>l",
+  ["<M-Up>"] = "<C-w>k",
+  ["<M-Down>"] = "<C-w>j",
 }
 
 for key, cmd in pairs(nav_maps) do
-  vim.keymap.set('n', key, cmd, { desc = 'Navigate windows' })
-  vim.keymap.set('t', key, '<C-\\><C-n>' .. cmd, { desc = 'Navigate from terminal' })
+  vim.keymap.set("n", key, cmd, { desc = "Navigate windows" })
+  vim.keymap.set("t", key, "<C-\\><C-n>" .. cmd, { desc = "Navigate from terminal" })
 end
 
 -- Buffer/tab navigation with bufferline
-vim.keymap.set('n', '<leader>bc', ':BufferLineCloseRight<CR>:BufferLineCloseLeft<CR>', { noremap = true, desc = 'Close all but current' })
-vim.keymap.set('n', '<leader>ls', ':ls<CR>', { noremap = true })
+vim.keymap.set(
+  "n",
+  "<leader>bc",
+  ":BufferLineCloseRight<CR>:BufferLineCloseLeft<CR>",
+  { noremap = true, desc = "Close all but current" }
+)
+vim.keymap.set("n", "<leader>ls", ":ls<CR>", { noremap = true })
 
 -- Quick buffer switching with numbers (reliable)
 for i = 1, 9 do
-  vim.keymap.set('n', '<leader>' .. i, function()
+  vim.keymap.set("n", "<leader>" .. i, function()
     -- Get the buffer ID at position i in bufferline
-    local buffers = require('bufferline.state').components
+    local buffers = require("bufferline.state").components
     if buffers[i] and buffers[i].id then
-      vim.cmd('buffer ' .. buffers[i].id)
+      vim.cmd("buffer " .. buffers[i].id)
     else
-      print('No buffer at position ' .. i)
+      print("No buffer at position " .. i)
     end
-  end, { desc = 'Go to buffer ' .. i })
+  end, { desc = "Go to buffer " .. i })
 end
 
-vim.keymap.set('n', 'gp', function()
-  local start_mark = vim.api.nvim_buf_get_mark(0, '[')
-  local end_mark = vim.api.nvim_buf_get_mark(0, ']')
-  
+vim.keymap.set("n", "gp", function()
+  local start_mark = vim.api.nvim_buf_get_mark(0, "[")
+  local end_mark = vim.api.nvim_buf_get_mark(0, "]")
+
   if start_mark[1] > 0 and end_mark[1] > 0 then
     vim.api.nvim_win_set_cursor(0, start_mark)
-    vim.cmd('normal! v')
+    vim.cmd("normal! v")
     vim.api.nvim_win_set_cursor(0, end_mark)
   else
     print("No recent paste to select")
   end
-end, { desc = 'Select last pasted text' })
+end, { desc = "Select last pasted text" })
 
 -- Buffer navigation with tab key
-vim.keymap.set('n', '<Tab>', ':BufferLineCycleNext<CR>', { noremap = true, silent = true, desc = 'Next buffer' })
-vim.keymap.set('n', '<S-Tab>', ':BufferLineCyclePrev<CR>', { noremap = true, silent = true, desc = 'Previous buffer' })
+vim.keymap.set("n", "<Tab>", ":BufferLineCycleNext<CR>", { noremap = true, silent = true, desc = "Next buffer" })
+vim.keymap.set("n", "<S-Tab>", ":BufferLineCyclePrev<CR>", { noremap = true, silent = true, desc = "Previous buffer" })
 
 -- Clipboard operations using + register
-vim.keymap.set('n', '<leader>y', '"+y', { desc = 'Yank to clipboard' })
-vim.keymap.set('v', '<leader>y', '"+y', { desc = 'Yank to clipboard' })
-vim.keymap.set('n', '<leader>yy', '"+yy', { desc = 'Yank line to clipboard' })
-vim.keymap.set('n', '<leader>d', '"+d', { desc = 'Delete to clipboard' })
-vim.keymap.set('v', '<leader>d', '"+d', { desc = 'Delete to clipboard' })
-vim.keymap.set('n', '<leader>dd', '"+dd', { desc = 'Delete line to clipboard' })
-vim.keymap.set('n', '<leader>p', '"+p', { desc = 'Paste from clipboard after cursor' })
-vim.keymap.set('n', '<leader>P', '"+P', { desc = 'Paste from clipboard before cursor' })
-vim.keymap.set('v', '<leader>p', '"+p', { desc = 'Paste from clipboard' })
+vim.keymap.set("n", "<leader>y", '"+y', { desc = "Yank to clipboard" })
+vim.keymap.set("v", "<leader>y", '"+y', { desc = "Yank to clipboard" })
+vim.keymap.set("n", "<leader>yy", '"+yy', { desc = "Yank line to clipboard" })
+vim.keymap.set("n", "<leader>d", '"+d', { desc = "Delete to clipboard" })
+vim.keymap.set("v", "<leader>d", '"+d', { desc = "Delete to clipboard" })
+vim.keymap.set("n", "<leader>dd", '"+dd', { desc = "Delete line to clipboard" })
+vim.keymap.set("n", "<leader>p", '"+p', { desc = "Paste from clipboard after cursor" })
+vim.keymap.set("n", "<leader>P", '"+P', { desc = "Paste from clipboard before cursor" })
+vim.keymap.set("v", "<leader>p", '"+p', { desc = "Paste from clipboard" })
 
 -- Map mouse back/forward to jump list navigation
-vim.keymap.set('n', '<X1Mouse>', '<C-o>', { desc = 'Jump back' })
-vim.keymap.set('n', '<X2Mouse>', '<C-i>', { desc = 'Jump forward' })
-vim.keymap.set('n', '<2-X1Mouse>', '<C-o>', { desc = 'Jump back (double)' })
-vim.keymap.set('n', '<2-X2Mouse>', '<C-i>', { desc = 'Jump forward (double)' })
+vim.keymap.set("n", "<X1Mouse>", "<C-o>", { desc = "Jump back" })
+vim.keymap.set("n", "<X2Mouse>", "<C-i>", { desc = "Jump forward" })
+vim.keymap.set("n", "<2-X1Mouse>", "<C-o>", { desc = "Jump back (double)" })
+vim.keymap.set("n", "<2-X2Mouse>", "<C-i>", { desc = "Jump forward (double)" })
 
 -- For my muscle memory, map ,c<space> to gc
-vim.keymap.set('n', '<leader>c<space>', 'gcc', { desc = 'Toggle comment line', remap = true })
-vim.keymap.set('v', '<leader>c<space>', 'gc', { desc = 'Toggle comment selection', remap = true })
+vim.keymap.set("n", "<leader>c<space>", "gcc", { desc = "Toggle comment line", remap = true })
+vim.keymap.set("v", "<leader>c<space>", "gc", { desc = "Toggle comment selection", remap = true })
 
-vim.keymap.set('n', '<leader>tq', function()
-  if vim.fn.getqflist({winid = 0}).winid ~= 0 then
-    vim.cmd('cclose')
+vim.keymap.set("n", "<leader>tq", function()
+  if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
+    vim.cmd("cclose")
   else
-    vim.cmd('copen')
+    vim.cmd("copen")
   end
-end, { desc = 'Toggle quickfix' })
+end, { desc = "Toggle quickfix" })
 
 -- Git status with Telescope
-vim.keymap.set('n', '<leader>gs', function()
-  require('telescope.builtin').git_status()
-end, { desc = 'Git status (Telescope)' })
+vim.keymap.set("n", "<leader>gs", function()
+  require("telescope.builtin").git_status()
+end, { desc = "Git status (Telescope)" })
 
 -- Load utility functions for diagnostics
 require("utils.diagnostic")
@@ -98,8 +103,8 @@ local function close_buffers_outside_root()
       local buftype = vim.bo[bufnr].buftype
 
       -- Only check regular file buffers
-      if buftype == '' and bufname ~= '' then
-        local buf_dir = vim.fn.fnamemodify(bufname, ':p:h')
+      if buftype == "" and bufname ~= "" then
+        local buf_dir = vim.fn.fnamemodify(bufname, ":p:h")
 
         -- Check if buffer is outside root directory
         -- Normalize paths to ensure proper comparison
@@ -107,7 +112,7 @@ local function close_buffers_outside_root()
         local normalized_root = vim.fn.resolve(root_path)
 
         -- Check if buffer path starts with root path
-        local is_under_root = normalized_buf_dir:find('^' .. vim.pesc(normalized_root))
+        local is_under_root = normalized_buf_dir:find("^" .. vim.pesc(normalized_root))
 
         if not is_under_root then
           pcall(function()
@@ -124,45 +129,83 @@ local function close_buffers_outside_root()
 end
 
 -- Create the command
-vim.api.nvim_create_user_command('CloseOutsideRoot', close_buffers_outside_root, {
-  desc = 'Close all file buffers outside nvim-tree root directory'
+vim.api.nvim_create_user_command("CloseOutsideRoot", close_buffers_outside_root, {
+  desc = "Close all file buffers outside nvim-tree root directory",
 })
 
 local function diff_two_files()
   local file1 = nil
-  
+
   -- First file selection
-  require('telescope.builtin').find_files({
+  require("telescope.builtin").find_files({
     prompt_title = "Select first file",
     attach_mappings = function(_, map)
-      map('i', '<CR>', function(prompt_bufnr)
-        local selection = require('telescope.actions.state').get_selected_entry()
+      map("i", "<CR>", function(prompt_bufnr)
+        local selection = require("telescope.actions.state").get_selected_entry()
         file1 = selection.path
-        require('telescope.actions').close(prompt_bufnr)
-        
+        require("telescope.actions").close(prompt_bufnr)
+
         -- Second file selection
         vim.defer_fn(function()
-          require('telescope.builtin').find_files({
+          require("telescope.builtin").find_files({
             prompt_title = "Select second file",
             attach_mappings = function(_, map2)
-              map2('i', '<CR>', function(prompt_bufnr2)
-                local selection2 = require('telescope.actions.state').get_selected_entry()
-                require('telescope.actions').close(prompt_bufnr2)
-                
+              map2("i", "<CR>", function(prompt_bufnr2)
+                local selection2 = require("telescope.actions.state").get_selected_entry()
+                require("telescope.actions").close(prompt_bufnr2)
+
                 -- Open diff
-                vim.cmd('tabnew')
-                vim.cmd('edit ' .. file1)
-                vim.cmd('vsplit ' .. selection2.path)
-                vim.cmd('windo diffthis')
+                vim.cmd("tabnew")
+                vim.cmd("edit " .. file1)
+                vim.cmd("vsplit " .. selection2.path)
+                vim.cmd("windo diffthis")
               end)
               return true
-            end
+            end,
           })
         end, 100)
       end)
       return true
-    end
+    end,
   })
 end
 
-vim.keymap.set('n', '<leader>d2', diff_two_files, { desc = 'Diff two files (Telescope)' })
+vim.keymap.set("n", "<leader>d2", diff_two_files, { desc = "Diff two files (Telescope)" })
+
+-- Define the smart format function once
+local function smart_format()
+  local ft = vim.bo.filetype
+
+  if vim.tbl_contains({
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+  }, ft) then
+    vim.lsp.buf.format({
+      filter = function(client)
+        return client.name == "null-ls"
+      end,
+      async = false,
+    })
+    print("Formatted with ESLint")
+  elseif ft == "lua" then
+    local view = vim.fn.winsaveview()
+    vim.cmd("silent !stylua --config-path ~/.config/stylua/stylua.toml %")
+    vim.cmd("keepmarks edit!")
+    vim.fn.winrestview(view)
+    print("Formatted with StyLua")
+  else
+    vim.lsp.buf.format({ async = false })
+    print("Formatted with LSP")
+  end
+end
+
+-- Visual mode: format selection
+vim.keymap.set("v", "=", smart_format, { desc = "Format selection" })
+
+-- Normal mode: format current line (like ==)
+vim.keymap.set("n", "==", smart_format, { desc = "Format current line" })
+
+-- Keep your explicit formatter
+vim.keymap.set({ "n", "v" }, "<leader>fo", smart_format, { desc = "Format with appropriate formatter" })

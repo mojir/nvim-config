@@ -3,10 +3,10 @@
 
 return {
   {
-    'gbprod/yanky.nvim',
-    dependencies = { 'nvim-telescope/telescope.nvim' },
+    "gbprod/yanky.nvim",
+    dependencies = { "nvim-telescope/telescope.nvim" },
     config = function()
-      require('yanky').setup({
+      require("yanky").setup({
         ring = {
           history_length = 50,
           storage = "shada",
@@ -26,14 +26,14 @@ return {
       })
 
       -- Load telescope extension
-      require('telescope').load_extension('yank_history')
+      require("telescope").load_extension("yank_history")
 
       -- Basic keymaps
-      vim.keymap.set({"n","x"}, "p", "<Plug>(YankyPutAfter)", { desc = 'Put after' })
-      vim.keymap.set({"n","x"}, "P", "<Plug>(YankyPutBefore)", { desc = 'Put before' })
-      
+      vim.keymap.set({ "n", "x" }, "p", "<Plug>(YankyPutAfter)", { desc = "Put after" })
+      vim.keymap.set({ "n", "x" }, "P", "<Plug>(YankyPutBefore)", { desc = "Put before" })
+
       -- Open yank history in Telescope
-      vim.keymap.set('n', '<leader>fy', '<cmd>Telescope yank_history<cr>', { desc = 'Yank history' })
+      vim.keymap.set("n", "<leader>fy", "<cmd>Telescope yank_history<cr>", { desc = "Yank history" })
     end,
   },
 }

@@ -3,7 +3,7 @@
 -- Configure diagnostics
 vim.diagnostic.config({
   virtual_text = {
-    prefix = '●',
+    prefix = "●",
     source = "if_many",
   },
   signs = {
@@ -27,7 +27,7 @@ vim.diagnostic.config({
 local M = {}
 
 function M.copy_diagnostic_under_cursor()
-  local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
+  local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })
 
   if #diagnostics == 0 then
     print("No diagnostic at cursor")
@@ -35,13 +35,13 @@ function M.copy_diagnostic_under_cursor()
   end
 
   local message = diagnostics[1].message
-  vim.fn.setreg('+', message)
+  vim.fn.setreg("+", message)
   vim.fn.setreg('"', message)
   print("Copied: " .. (message:len() > 50 and message:sub(1, 50) .. "..." or message))
 end
 
 function M.copy_all_diagnostics_on_line()
-  local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line('.') - 1 })
+  local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })
 
   if #diagnostics == 0 then
     print("No diagnostics on current line")
@@ -53,23 +53,23 @@ function M.copy_all_diagnostics_on_line()
     table.insert(messages, diagnostic.message)
   end
 
-  local combined = table.concat(messages, ' | ')
-  vim.fn.setreg('+', combined)
+  local combined = table.concat(messages, " | ")
+  vim.fn.setreg("+", combined)
   vim.fn.setreg('"', combined)
   print("Copied " .. #diagnostics .. " diagnostic(s)")
 end
 
 function M.copy_messages()
-  local messages = vim.fn.execute('messages')
-  vim.fn.setreg('+', messages)
+  local messages = vim.fn.execute("messages")
+  vim.fn.setreg("+", messages)
   vim.fn.setreg('"', messages)
   print("Messages copied to clipboard")
 end
 
 function M.copy_last_message()
-  local messages = vim.fn.execute('messages')
-  local lines = vim.split(messages, '\n')
-  
+  local messages = vim.fn.execute("messages")
+  local lines = vim.split(messages, "\n")
+
   -- Find the last non-empty line
   local last_message = ""
   for i = #lines, 1, -1 do
@@ -78,9 +78,9 @@ function M.copy_last_message()
       break
     end
   end
-  
+
   if last_message ~= "" then
-    vim.fn.setreg('+', last_message)
+    vim.fn.setreg("+", last_message)
     vim.fn.setreg('"', last_message)
     print("Copied last message: " .. (last_message:len() > 50 and last_message:sub(1, 50) .. "..." or last_message))
   else
@@ -89,9 +89,9 @@ function M.copy_last_message()
 end
 
 -- Set up keymaps for diagnostic functions
-vim.keymap.set('n', '<leader>cd', M.copy_diagnostic_under_cursor, { desc = 'Copy diagnostic under cursor' })
-vim.keymap.set('n', '<leader>cD', M.copy_all_diagnostics_on_line, { desc = 'Copy all diagnostics on line' })
-vim.keymap.set('n', '<leader>cm', M.copy_last_message, { desc = 'Copy messages to clipboard' })
-vim.keymap.set('n', '<leader>cM', M.copy_messages, { desc = 'Copy messages to clipboard' })
+vim.keymap.set("n", "<leader>cd", M.copy_diagnostic_under_cursor, { desc = "Copy diagnostic under cursor" })
+vim.keymap.set("n", "<leader>cD", M.copy_all_diagnostics_on_line, { desc = "Copy all diagnostics on line" })
+vim.keymap.set("n", "<leader>cm", M.copy_last_message, { desc = "Copy messages to clipboard" })
+vim.keymap.set("n", "<leader>cM", M.copy_messages, { desc = "Copy messages to clipboard" })
 
 return M

@@ -7,7 +7,7 @@ opt.tabstop = 2
 opt.shiftwidth = 2
 opt.softtabstop = 2
 opt.wrap = false
-opt.mouse = 'a'
+opt.mouse = "a"
 
 -- Disable swapfiles
 opt.swapfile = false
@@ -18,9 +18,8 @@ opt.number = true
 
 -- Enable persistent undo
 opt.undofile = true
-opt.undodir = vim.fn.stdpath('data') .. '/undo'
+opt.undodir = vim.fn.stdpath("data") .. "/undo"
 
 opt.signcolumn = "auto:2"
 
-vim.o.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
-
+vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
