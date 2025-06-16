@@ -27,12 +27,26 @@ return {
         -- Logging
         log_level = "error",
 
+        bypass_session_save_file_types = {
+          "gitcommit",
+          "gitrebase",
+          "help",
+          "terminal", -- This is key!
+        },
+
         -- Hooks for nvim-tree integration
         pre_save_cmds = {
           function()
             -- Close nvim-tree before saving
             if pcall(require, "nvim-tree.api") then
               require("nvim-tree.api").tree.close()
+            end
+
+            -- Close all terminal buffers before saving session
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+              if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buftype == "terminal" then
+                vim.api.nvim_buf_delete(buf, { force = true })
+              end
             end
           end,
         },
