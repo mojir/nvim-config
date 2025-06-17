@@ -40,6 +40,7 @@ return {
         vim.keymap.set("t", "<C-l>", [[<Cmd>wincmd l<CR>]], opts)
         vim.keymap.set("n", "i", "i", { buffer = 0 })
         vim.keymap.set("n", "a", "a", { buffer = 0 })
+        vim.keymap.set("n", "<esc>", "<cmd>close<CR>", { buffer = 0, desc = "Close terminal" })
       end
 
       vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
