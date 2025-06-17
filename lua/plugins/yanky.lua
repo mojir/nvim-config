@@ -1,10 +1,14 @@
--- Basic yanky.nvim configuration
--- Add this to your plugins/ directory (e.g., lua/plugins/yanky.lua)
-
+-- Basic yanky.nvim configuration with lazy loading
 return {
   {
     "gbprod/yanky.nvim",
+    event = { "BufReadPost", "BufNewFile" },
     dependencies = { "nvim-telescope/telescope.nvim" },
+    keys = {
+      { "p", "<Plug>(YankyPutAfter)", mode = { "n", "x" }, desc = "Put after" },
+      { "P", "<Plug>(YankyPutBefore)", mode = { "n", "x" }, desc = "Put before" },
+      { "<leader>fy", "<cmd>Telescope yank_history<cr>", desc = "Yank history" },
+    },
     config = function()
       require("yanky").setup({
         ring = {
@@ -27,13 +31,6 @@ return {
 
       -- Load telescope extension
       require("telescope").load_extension("yank_history")
-
-      -- Basic keymaps
-      vim.keymap.set({ "n", "x" }, "p", "<Plug>(YankyPutAfter)", { desc = "Put after" })
-      vim.keymap.set({ "n", "x" }, "P", "<Plug>(YankyPutBefore)", { desc = "Put before" })
-
-      -- Open yank history in Telescope
-      vim.keymap.set("n", "<leader>fy", "<cmd>Telescope yank_history<cr>", { desc = "Yank history" })
     end,
   },
 }
