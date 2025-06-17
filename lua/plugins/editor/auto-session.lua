@@ -1,10 +1,9 @@
 return {
-  -- Auto-session with bundled session-lens (single plugin)
   {
     "rmagatti/auto-session",
     lazy = false,
     dependencies = {
-      "nvim-telescope/telescope.nvim", -- Only telescope is needed
+      "nvim-telescope/telescope.nvim",
     },
     config = function()
       require("auto-session").setup({
@@ -27,36 +26,24 @@ return {
         -- Logging
         log_level = "error",
 
+        -- File types to bypass when saving sessions
         bypass_session_save_file_types = {
           "gitcommit",
           "gitrebase",
           "help",
-          "terminal", -- This is key!
+          "terminal",
         },
 
-        -- Hooks for nvim-tree integration
+        -- Simple hooks - just close nvim-tree
         pre_save_cmds = {
-          function()
-            -- Close nvim-tree before saving
-            if pcall(require, "nvim-tree.api") then
-              require("nvim-tree.api").tree.close()
-            end
-
-            -- Close all terminal buffers before saving session
-            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-              if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buftype == "terminal" then
-                vim.api.nvim_buf_delete(buf, { force = true })
-              end
-            end
-          end,
+          "NvimTreeClose", -- Simple command instead of function
         },
 
         post_restore_cmds = {
           function()
+            -- Simple nvim-tree restoration
             vim.defer_fn(function()
               if pcall(require, "nvim-tree.api") then
-                local cwd = vim.fn.getcwd()
-                require("nvim-tree.api").tree.change_root(cwd)
                 require("nvim-tree.api").tree.reload()
               end
             end, 100)
@@ -65,10 +52,7 @@ return {
 
         -- Built-in session-lens configuration
         session_lens = {
-          -- Load session-lens on setup
           load_on_setup = true,
-
-          -- Telescope theme configuration
           theme_conf = {
             border = true,
             layout_config = {
@@ -76,29 +60,22 @@ return {
               height = 0.6,
             },
           },
-
-          -- Don't show session file preview
           previewer = false,
-
-          -- Custom session display
           path_display = { "smart" },
-
-          -- Prompt title
           prompt_title = "Sessions",
         },
       })
 
-      -- Session picker using built-in session-lens
+      -- Keymaps
       vim.keymap.set("n", "<leader>sp", function()
         require("auto-session.session-lens").search_session({})
       end, { desc = "Pick session (Telescope)" })
 
-      -- Explicit session save
       vim.keymap.set("n", "<leader>ss", function()
         require("auto-session").SaveSession()
       end, { desc = "Save current session" })
 
-      -- Load the telescope extension (built-in)
+      -- Load telescope extension
       vim.defer_fn(function()
         if pcall(require, "telescope") then
           require("telescope").load_extension("session-lens")
