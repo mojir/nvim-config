@@ -13,10 +13,11 @@ return {
       })
 
       -- Essential keymaps
-      vim.keymap.set("n", "<leader>gdo", "<cmd>DiffviewOpen<cr>", { desc = "Open diffview" })
-      vim.keymap.set("n", "<leader>gdc", "<cmd>DiffviewClose<cr>", { desc = "Close diffview" })
-      vim.keymap.set("n", "<leader>gdh", "<cmd>DiffviewFileHistory<cr>", { desc = "File history" })
-      vim.keymap.set("n", "<leader>gdH", "<cmd>DiffviewFileHistory %<cr>", { desc = "Current file history" })
+      vim.keymap.set("n", "<leader>dvo", "<cmd>DiffviewOpen<cr>", { desc = "Open diffview" })
+      vim.keymap.set("n", "<leader>dvc", "<cmd>DiffviewClose<cr>", { desc = "Close diffview" })
+      vim.keymap.set("n", "<leader>dvh", "<cmd>DiffviewFileHistory<cr>", { desc = "File history" })
+      vim.keymap.set("n", "<leader>dvH", "<cmd>DiffviewFileHistory %<cr>", { desc = "Current file history" })
+      vim.keymap.set("n", "<leader>dvr", "<cmd>DiffviewRefresh<cr>", { desc = "Refresh diffview" })
     end,
   },
 }

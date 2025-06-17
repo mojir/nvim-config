@@ -7,6 +7,11 @@ return {
       "b0o/schemastore.nvim",
     },
     config = function()
+      pcall(vim.keymap.del, "n", "grr")
+      pcall(vim.keymap.del, "n", "grn")
+      pcall(vim.keymap.del, "n", "gri")
+      pcall(vim.keymap.del, "n", "gra")
+
       -- Mason setup
       require("mason").setup({
         ui = {
@@ -29,7 +34,6 @@ return {
           "jsonls",
           "marksman",
           "pyright",
-          "stylua",
         },
         automatic_enable = false,
       })
@@ -150,7 +154,7 @@ return {
           vim.keymap.set("n", "]d", function()
             vim.diagnostic.jump({ count = 1 })
           end, opts)
-          vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, opts)
+          vim.keymap.set("n", "<leader>dl", vim.diagnostic.setloclist, opts)
 
           -- Workspace management
           vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, opts)

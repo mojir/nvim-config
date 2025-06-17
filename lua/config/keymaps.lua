@@ -58,10 +58,6 @@ vim.keymap.set("n", "<S-Tab>", ":BufferLineCyclePrev<CR>", { noremap = true, sil
 -- Clipboard operations using + register
 vim.keymap.set("n", "<leader>y", '"+y', { desc = "Yank to clipboard" })
 vim.keymap.set("v", "<leader>y", '"+y', { desc = "Yank to clipboard" })
-vim.keymap.set("n", "<leader>yy", '"+yy', { desc = "Yank line to clipboard" })
-vim.keymap.set("n", "<leader>d", '"+d', { desc = "Delete to clipboard" })
-vim.keymap.set("v", "<leader>d", '"+d', { desc = "Delete to clipboard" })
-vim.keymap.set("n", "<leader>dd", '"+dd', { desc = "Delete line to clipboard" })
 vim.keymap.set("n", "<leader>p", '"+p', { desc = "Paste from clipboard after cursor" })
 vim.keymap.set("n", "<leader>P", '"+P', { desc = "Paste from clipboard before cursor" })
 vim.keymap.set("v", "<leader>p", '"+p', { desc = "Paste from clipboard" })
@@ -214,3 +210,42 @@ vim.keymap.set("n", "==", smart_format, { desc = "Format current line" })
 
 -- Keep your explicit formatter
 vim.keymap.set({ "n", "v" }, "<leader>fo", smart_format, { desc = "Format with appropriate formatter" })
+
+-- JSON formatting with jq
+vim.keymap.set("v", "<leader>jf", function()
+  -- Check if jq is available
+  local handle = io.popen("command -v jq >/dev/null 2>&1 && echo 'exists'")
+  local jq_exists = handle and handle:read("*a"):match("exists")
+  if handle then
+    handle:close()
+  end
+
+  if not jq_exists then
+    print("jq not found. Install with: brew install jq")
+    return
+  end
+
+  -- Exit visual mode first to set the marks, then run the command
+  vim.cmd("normal! :")
+  vim.cmd("'<,'>!jq .")
+  print("JSON formatted")
+end, { desc = "Format selected JSON" })
+
+-- JSON minify
+vim.keymap.set("v", "<leader>jm", function()
+  local handle = io.popen("command -v jq >/dev/null 2>&1 && echo 'exists'")
+  local jq_exists = handle and handle:read("*a"):match("exists")
+  if handle then
+    handle:close()
+  end
+
+  if not jq_exists then
+    print("jq not found. Install with: brew install jq")
+    return
+  end
+
+  -- Exit visual mode first to set the marks, then run the command
+  vim.cmd("normal! :")
+  vim.cmd("'<,'>!jq -c .")
+  print("JSON minified")
+end, { desc = "Minify selected JSON" })

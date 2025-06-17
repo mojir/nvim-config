@@ -139,7 +139,7 @@ return {
         require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
       end, { desc = "Conditional breakpoint" })
 
-      vim.keymap.set("n", "<leader>dl", function()
+      vim.keymap.set("n", "<leader>bl", function()
         local bps = require("dap.breakpoints").get()
         if vim.tbl_isempty(bps) then
           print("No breakpoints set")
