@@ -187,11 +187,6 @@ return {
           vim.cmd("edit")
         end, 100)
       end, { desc = "Restart LSP clients" })
-
-      -- LSP keymaps
-      vim.keymap.set("n", "<leader>li", "<cmd>LspInfo<cr>", { desc = "LSP Info" })
-      vim.keymap.set("n", "<leader>lr", "<cmd>LspRestart<cr>", { desc = "LSP Restart" })
-      vim.keymap.set("n", "<leader>ma", "<cmd>Mason<cr>", { desc = "Open Mason" })
     end,
   },
 }
