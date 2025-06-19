@@ -1,0 +1,141 @@
+local M = {}
+
+-- Path to your phrases file
+local phrases_file = vim.fn.expand("~/.config/nvim/data/my_snippets.json")
+
+-- Function to expand placeholders
+local function expand_placeholders(text)
+  local result = text
+  
+  -- Get current file information
+  local current_file = vim.api.nvim_buf_get_name(0)
+  
+  -- Date placeholders
+  result = result:gsub("{date:day}", os.date("%A"))  -- Monday, Tuesday, etc
+  result = result:gsub("{date:date}", os.date("%Y-%m-%d"))  -- 2025-01-02
+  result = result:gsub("{date:time}", os.date("%H:%M"))  -- 14:38
+  result = result:gsub("{date:week}", os.date("%V"))  -- ISO week number
+  result = result:gsub("{date:now}", tostring(os.time() * 1000))  -- Unix epoch in ms
+  
+  -- File placeholders
+  if current_file and current_file ~= "" then
+    -- Just filename: foo.txt
+    local filename = vim.fn.fnamemodify(current_file, ":t")
+    result = result:gsub("{file:name}", filename)
+    
+    -- Relative path from cwd: src/foo.txt
+    local relative_path = vim.fn.fnamemodify(current_file, ":.")
+    result = result:gsub("{file:rel}", relative_path)
+    
+    -- Absolute path: /Users/joe/proj/src/foo.txt
+    result = result:gsub("{file:abs}", current_file)
+  else
+    -- Handle case when no file is open
+    result = result:gsub("{file:name}", "[no file]")
+    result = result:gsub("{file:rel}", "[no file]")
+    result = result:gsub("{file:abs}", "[no file]")
+  end
+  
+  -- Custom placeholders
+  result = result:gsub("{cursor}", "") -- Mark cursor position
+  
+  return result
+end
+
+-- Function to read phrases from JSON file
+local function read_phrases()
+  local phrases = {}
+  local file = io.open(phrases_file, "r")
+  
+  if not file then
+    vim.notify("Phrases file not found: " .. phrases_file, vim.log.levels.WARN)
+    return phrases
+  end
+  
+  local content = file:read("*all")
+  file:close()
+  
+  -- Parse JSON
+  local ok, json_data = pcall(vim.fn.json_decode, content)
+  if not ok then
+    vim.notify("Invalid JSON in phrases file: " .. phrases_file, vim.log.levels.ERROR)
+    return phrases
+  end
+  
+  -- Convert JSON object to phrases array
+  for description, phrase in pairs(json_data) do
+    table.insert(phrases, {
+      description = description,
+      original = phrase,
+      expanded = expand_placeholders(phrase),
+      display = description .. " → " .. phrase
+    })
+  end
+  
+  return phrases
+end
+
+-- Create the picker function
+local function my_snippets()
+  local pickers = require("telescope.pickers")
+  local finders = require("telescope.finders")
+  local conf = require("telescope.config").values
+  local actions = require("telescope.actions")
+  local action_state = require("telescope.actions.state")
+  
+  local phrases = read_phrases()
+  
+  if #phrases == 0 then
+    vim.notify("No phrases found in " .. phrases_file, vim.log.levels.WARN)
+    return
+  end
+  
+  pickers.new({}, {
+    prompt_title = "Insert Phrase",
+    finder = finders.new_table({
+      results = phrases,
+      entry_maker = function(entry)
+        return {
+          value = entry,
+          display = entry.description,
+          ordinal = entry.description .. " " .. entry.original,
+        }
+      end,
+    }),
+    sorter = conf.generic_sorter({}),
+    attach_mappings = function(prompt_bufnr, map)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        if selection then
+          local expanded_text = selection.value.expanded
+          
+          -- Handle cursor positioning if {cursor} placeholder exists
+          local cursor_pos = expanded_text:find("{cursor}")
+          if cursor_pos then
+            expanded_text = expanded_text:gsub("{cursor}", "")
+            vim.api.nvim_put({expanded_text}, "c", true, true)
+            
+            -- Move cursor to the placeholder position
+            local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+            vim.api.nvim_win_set_cursor(0, {row, col + cursor_pos - 1})
+          else
+            vim.api.nvim_put({expanded_text}, "c", true, true)
+          end
+        end
+      end)
+      return true
+    end,
+  }):find()
+end
+
+-- Setup function
+function M.setup()
+
+  _G.my_snippets = my_snippets
+  
+  -- Add keymap
+  vim.keymap.set("n", "<leader>ms", my_snippets, { desc = "My snippets" })
+end
+
+return M

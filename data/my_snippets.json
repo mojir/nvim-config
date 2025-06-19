@@ -1,0 +1,19 @@
+{
+  "Today's date": "{date:date}",
+  "Current time": "{date:time}",
+  "This week number": "Week {date:week}",
+  "Today is": "Today is {date:day}, {date:date}",
+  "Current file name": "Working on {file:name}",
+  "File path": "File: {file:rel}",
+  "Meeting today": "Thanks for the meeting today ({date:date})",
+  "Code review": "Please review {file:rel}",
+  "Documentation": "## {file:name}\n\nCreated: {date:date}\n{cursor}",
+  "Git commit fix": "fix: resolve issue in {file:name}",
+  "Git commit feature": "feat: add functionality to {file:rel}",
+  "Timestamp": "Updated on {date:date} at {date:time}",
+  "Unix timestamp": "Generated: {date:now}",
+  "Email greeting": "Hi there,\n\n{cursor}\n\nBest regards,",
+  "Thanks": "Thanks for reaching out",
+  "Follow up": "I'll get back to you soon",
+  "Questions": "Let me know if you have questions"
+}
