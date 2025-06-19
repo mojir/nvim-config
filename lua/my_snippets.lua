@@ -99,15 +99,15 @@ local function my_snippets()
       prompt_title = "Insert Phrase",
       finder = finders.new_table({
         results = phrases,
-        entry_maker = function(entry)
-          return {
-            value = entry,
-            display = entry.description .. " -> " .. (entry.original:gsub("\n", " "):len() > 30 and entry.original
-              :gsub("\n", " ")
-              :sub(1, 30) .. "..." or entry.original:gsub("\n", " ")),
-            ordinal = entry.description,
-          }
-        end,
+entry_maker = function(entry)
+  return {
+    value = entry,
+    display = entry.description .. " -> " .. (entry.expanded:gsub("\n", " "):len() > 30 and entry.expanded
+      :gsub("\n", " ")
+      :sub(1, 30) .. "..." or entry.expanded:gsub("\n", " ")),
+    ordinal = entry.description,
+  }
+end,
       }),
       sorter = conf.generic_sorter({}),
       attach_mappings = function(prompt_bufnr, map)

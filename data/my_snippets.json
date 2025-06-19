@@ -21,14 +21,14 @@
   ],
   [
     "Relative file path",
-    "File: {file:rel}"
+    "{file:rel}"
   ],
   [
     "Absolute file path",
-    "File: {file:abs}"
+    "{file:abs}"
   ],
   [
     "Current working directory",
-    "File: {cwd}"
+    "{cwd}"
   ]
 ]
