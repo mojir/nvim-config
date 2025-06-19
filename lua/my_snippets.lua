@@ -36,9 +36,6 @@ local function expand_placeholders(text)
     result = result:gsub("{file:abs}", "[no file]")
   end
   
-  -- Custom placeholders
-  result = result:gsub("{cursor}", "") -- Mark cursor position
-  
   return result
 end
 
@@ -108,20 +105,7 @@ local function my_snippets()
         actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
         if selection then
-          local expanded_text = selection.value.expanded
-          
-          -- Handle cursor positioning if {cursor} placeholder exists
-          local cursor_pos = expanded_text:find("{cursor}")
-          if cursor_pos then
-            expanded_text = expanded_text:gsub("{cursor}", "")
-            vim.api.nvim_put({expanded_text}, "c", true, true)
-            
-            -- Move cursor to the placeholder position
-            local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-            vim.api.nvim_win_set_cursor(0, {row, col + cursor_pos - 1})
-          else
-            vim.api.nvim_put({expanded_text}, "c", true, true)
-          end
+          vim.api.nvim_put({selection.value.expanded}, "c", true, true)
         end
       end)
       return true
