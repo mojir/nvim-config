@@ -57,6 +57,7 @@ vim.keymap.set("n", "<S-Tab>", ":BufferLineCyclePrev<CR>", { noremap = true, sil
 
 -- Clipboard operations using + register
 vim.keymap.set("n", "<leader>y", '"+y', { desc = "Yank to clipboard" })
+vim.keymap.set("n", "<leader>Y", '"+Y', { desc = "Yank to clipboard" })
 vim.keymap.set("v", "<leader>y", '"+y', { desc = "Yank to clipboard" })
 vim.keymap.set("n", "<leader>p", '"+p', { desc = "Paste from clipboard after cursor" })
 vim.keymap.set("n", "<leader>P", '"+P', { desc = "Paste from clipboard before cursor" })
@@ -153,7 +154,7 @@ local function diff_two_files()
                 -- Open diff
                 vim.cmd("tabnew")
                 vim.cmd("edit " .. file1)
-                vim.cmd("vsplit " .. selection2.path)
+                mim.cmd("vsplit " .. selection2.path)
                 vim.cmd("windo diffthis")
               end)
               return true
@@ -202,14 +203,8 @@ local function smart_format()
   end
 end
 
--- Visual mode: format selection
-vim.keymap.set("v", "=", smart_format, { desc = "Format selection" })
-
--- Normal mode: format current line (like ==)
-vim.keymap.set("n", "==", smart_format, { desc = "Format current line" })
-
 -- Keep your explicit formatter
-vim.keymap.set({ "n", "v" }, "<leader>fo", smart_format, { desc = "Format with appropriate formatter" })
+vim.keymap.set({ "n" }, "<leader>fo", smart_format, { desc = "Format with appropriate formatter" })
 
 -- JSON formatting with jq
 vim.keymap.set("v", "<leader>jf", function()

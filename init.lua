@@ -6,8 +6,8 @@ vim.g.loaded_netrwPlugin = 1
 vim.opt.termguicolors = true
 
 -- Make sure to setup `mapleader` and `maplocalleader` before loading lazy.nvim
-vim.g.mapleader = ","
-vim.g.maplocalleader = "\\"
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
 
 -- Load configuration modules
 require("config")
