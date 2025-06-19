@@ -46,7 +46,10 @@ return {
         },
 
         highlight = {
-          enable = true,
+          enable = function(_, buf)
+            -- Only enable for non-terminal buffers
+            return vim.bo[buf].buftype ~= "terminal"
+          end,
           -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
           -- additional_vim_regex_highlighting = false,
         },

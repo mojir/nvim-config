@@ -13,7 +13,7 @@ local function expand_placeholders(text)
   -- Date placeholders
   result = result:gsub("{date:day}", os.date("%A")) -- Monday, Tuesday, etc
   result = result:gsub("{date:date}", os.date("%Y-%m-%d")) -- 2025-01-02
-  result = result:gsub("{date:time}", os.date("%H:%M")) -- 14:38
+  result = result:gsub("{date:time}", os.date("%H:%M:%S")) -- 14:38
   result = result:gsub("{date:week}", os.date("%V")) -- ISO week number
   result = result:gsub("{cwd}", vim.fn.getcwd())
 
