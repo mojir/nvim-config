@@ -39,7 +39,7 @@ local function expand_placeholders(text)
   return result
 end
 
--- Function to read phrases from JSON file
+-- Function to read phrases from JSON file (now expects array of pairs)
 local function read_phrases()
   local phrases = {}
   local file = io.open(phrases_file, "r")
@@ -59,14 +59,21 @@ local function read_phrases()
     return phrases
   end
   
-  -- Convert JSON object to phrases array
-  for description, phrase in pairs(json_data) do
-    table.insert(phrases, {
-      description = description,
-      original = phrase,
-      expanded = expand_placeholders(phrase),
-      display = description .. " → " .. phrase
-    })
+  -- Convert JSON array of pairs to phrases array (preserves order)
+  for i, pair in ipairs(json_data) do
+    if type(pair) == "table" and #pair >= 2 then
+      local description = pair[1]
+      local phrase = pair[2]
+      table.insert(phrases, {
+        index = i,
+        description = description,
+        original = phrase,
+        expanded = expand_placeholders(phrase),
+        display = description .. " → " .. phrase
+      })
+    else
+      vim.notify("Invalid pair format at index " .. i .. " in phrases file", vim.log.levels.WARN)
+    end
   end
   
   return phrases
@@ -115,7 +122,6 @@ end
 
 -- Setup function
 function M.setup()
-
   _G.my_snippets = my_snippets
   
   -- Add keymap
