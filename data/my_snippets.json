@@ -9,62 +9,26 @@
   ],
   [
     "This week number",
-    "Week {date:week}"
+    "{date:week}"
   ],
   [
-    "Today is",
-    "Today is {date:day}, {date:date}"
+    "Today's day",
+    "{date:day}"
   ],
   [
-    "Current file name",
-    "Working on {file:name}"
+    "File name",
+    "{file:name}"
   ],
   [
-    "File path",
+    "Relative file path",
     "File: {file:rel}"
   ],
   [
-    "Meeting today",
-    "Thanks for the meeting today ({date:date})"
+    "Absolute file path",
+    "File: {file:abs}"
   ],
   [
-    "Code review",
-    "Please review {file:rel}"
-  ],
-  [
-    "Documentation",
-    "## {file:name}\n\nCreated: {date:date}\n{cursor}"
-  ],
-  [
-    "Git commit fix",
-    "fix: resolve issue in {file:name}"
-  ],
-  [
-    "Git commit feature",
-    "feat: add functionality to {file:rel}"
-  ],
-  [
-    "Timestamp",
-    "Updated on {date:date} at {date:time}"
-  ],
-  [
-    "Unix timestamp",
-    "Generated: {date:now}"
-  ],
-  [
-    "Email greeting",
-    "Hi there,\n\n{cursor}\n\nBest regards,"
-  ],
-  [
-    "Thanks",
-    "Thanks for reaching out"
-  ],
-  [
-    "Follow up",
-    "I'll get back to you soon"
-  ],
-  [
-    "Questions",
-    "Let me know if you have questions"
+    "Current working directory",
+    "File: {cwd}"
   ]
 ]
