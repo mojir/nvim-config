@@ -102,15 +102,13 @@ local function my_snippets()
 entry_maker = function(entry)
   return {
     value = entry,
-    display = entry.description .. " -> " .. (entry.expanded:gsub("\n", " "):len() > 30 and entry.expanded
-      :gsub("\n", " ")
-      :sub(1, 30) .. "..." or entry.expanded:gsub("\n", " ")),
+    display = entry.description .. " -> " .. entry.expanded:gsub("\n", " "),
     ordinal = entry.description,
   }
 end,
       }),
       sorter = conf.generic_sorter({}),
-      attach_mappings = function(prompt_bufnr, map)
+      attach_mappings = function(prompt_bufnr)
         actions.select_default:replace(function()
           actions.close(prompt_bufnr)
           local selection = action_state.get_selected_entry()
