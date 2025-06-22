@@ -69,4 +69,9 @@ return {
       vim.keymap.set("n", "<leader>np", require("package-info").change_version, { desc = "Change package version" })
     end,
   },
+  {
+    "windwp/nvim-ts-autotag",
+    ft = { "html", "javascript", "typescript", "javascriptreact", "typescriptreact", "vue" },
+    config = true,
+  },
 }
