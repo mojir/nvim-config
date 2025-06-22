@@ -34,7 +34,7 @@ return {
           "jsonls",
           "marksman",
           "pyright",
-          "volar",
+          "vue_ls",
         },
         automatic_enable = false,
       })
@@ -61,6 +61,16 @@ return {
             "javascriptreact",
             "typescript",
             "typescriptreact",
+          },
+        },
+        -- In your server_configs table, add:
+        volar = {
+          capabilities = capabilities,
+          filetypes = { "vue" },
+          init_options = {
+            vue = {
+              hybridMode = false,
+            },
           },
         },
       }
@@ -101,7 +111,7 @@ return {
           })
         else
           -- local servers = { 'pyright', 'bashls', 'html', 'cssls', 'emmet_ls', 'ts_ls' }
-          local servers = { "pyright", "bashls", "html", "cssls", "emmet_ls", "jsonls" }
+          local servers = { "pyright", "bashls", "html", "cssls", "emmet_ls", "jsonls", "volar" }
           for _, server in ipairs(servers) do
             if server == "emmet_ls" then
               lspconfig[server].setup({
@@ -114,6 +124,7 @@ return {
                   "javascriptreact",
                   "typescript",
                   "typescriptreact",
+                  "vue",
                 },
               })
             else
