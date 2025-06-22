@@ -34,6 +34,7 @@ return {
           "jsonls",
           "marksman",
           "pyright",
+          "volar",
         },
         automatic_enable = false,
       })

@@ -43,6 +43,7 @@ return {
           "git_rebase",
           "gitcommit",
           "gitignore",
+          "vue",
         },
 
         highlight = {

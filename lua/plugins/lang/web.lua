@@ -2,7 +2,7 @@ return {
   -- Emmet for HTML/CSS
   {
     "mattn/emmet-vim",
-    ft = { "html", "css", "scss", "javascript", "javascriptreact", "typescript", "typescriptreact" },
+    ft = { "html", "css", "scss", "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
     config = function()
       vim.g.user_emmet_leader_key = "<C-Z>"
       vim.g.user_emmet_settings = {
@@ -19,7 +19,7 @@ return {
   -- Color highlighting
   {
     "norcalli/nvim-colorizer.lua",
-    ft = { "css", "scss", "html", "javascript", "typescript" },
+    ft = { "css", "scss", "html", "javascript", "typescript", "javascriptreact", "typescriptreact", "vue" },
     config = function()
       require("colorizer").setup({
         "css",
