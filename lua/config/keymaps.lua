@@ -81,11 +81,6 @@ vim.keymap.set("n", "<leader>tq", function()
   end
 end, { desc = "Toggle quickfix" })
 
--- Git status with Telescope
-vim.keymap.set("n", "<leader>gs", function()
-  require("telescope.builtin").git_status()
-end, { desc = "Git status (Telescope)" })
-
 -- Load utility functions for diagnostics
 require("utils.diagnostic")
 
@@ -154,7 +149,7 @@ local function diff_two_files()
                 -- Open diff
                 vim.cmd("tabnew")
                 vim.cmd("edit " .. file1)
-                mim.cmd("vsplit " .. selection2.path)
+                vim.cmd("vsplit " .. selection2.path)
                 vim.cmd("windo diffthis")
               end)
               return true
