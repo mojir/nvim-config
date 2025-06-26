@@ -120,8 +120,9 @@ return {
         })
       end, { desc = "Search WORD under cursor" })
 
-      vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Telescope buffers" })
-      vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Telescope help tags" })
+      vim.keymap.set("n", "<leader><leader>b", builtin.buffers, { desc = "Telescope buffers" })
+      vim.keymap.set("n", "<leader><leader>c", builtin.commands, { desc = "Telescope buffers" })
+      vim.keymap.set("n", "<leader><leader>?", builtin.help_tags, { desc = "Telescope help tags" })
 
       require('my_snippets').setup()
     end,
