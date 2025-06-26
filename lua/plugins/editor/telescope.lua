@@ -45,7 +45,13 @@ return {
           },
           find_files = {
             hidden = true,
-            find_command = { "rg", "--files", "--hidden" },
+            find_command = {
+              "rg",
+              "--files",
+              "--hidden",
+              "--glob", "!.git/*",
+              "--glob", "!node_modules/*"
+            },
           },
         },
         extensions = {
@@ -64,14 +70,15 @@ return {
             -- layout_config = { mirror=true }, -- mirror preview pane
           },
         },
+        mouse = false, -- disable mouse support
       })
 
       telescope.load_extension("live_grep_args")
       local builtin = require("telescope.builtin")
-      vim.keymap.set("n", "<leader>fm", "<cmd>Telescope marks<cr>", { desc = "Show registers" })
-      vim.keymap.set("n", "<leader>fr", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
-      vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Telescope find files" })
-      vim.keymap.set("n", "<leader>fg", function()
+      vim.keymap.set("n", "<leader><leader>m", "<cmd>Telescope marks<cr>", { desc = "Show registers" })
+      vim.keymap.set("n", "<leader><leader>r", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
+      vim.keymap.set("n", "<leader><leader>f", builtin.find_files, { desc = "Telescope find files" })
+      vim.keymap.set("n", "<leader><leader>g", function()
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
             return { "--hidden" }
@@ -79,7 +86,7 @@ return {
         })
       end, { desc = "Live grep with args (including hidden)" })
 
-      vim.keymap.set("v", "<leader>fg", function()
+      vim.keymap.set("v", "<leader><leader>g", function()
         -- Simply yank the selection and get it from the default register
         vim.cmd("normal! y")
         local search_text = vim.fn.getreg('"')
@@ -92,7 +99,7 @@ return {
         })
       end, { desc = "Live grep with args (including hidden)" })
       -- Search for word under cursor
-      vim.keymap.set("n", "<leader>fw", function()
+      vim.keymap.set("n", "<leader><leader>w", function()
         local word = vim.fn.expand("<cword>")
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
@@ -103,7 +110,7 @@ return {
       end, { desc = "Search word under cursor" })
 
       -- Search for WORD under cursor
-      vim.keymap.set("n", "<leader>fW", function()
+      vim.keymap.set("n", "<leader><leader>W", function()
         local word = vim.fn.expand("<cWORD>")
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
