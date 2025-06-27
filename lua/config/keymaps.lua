@@ -42,6 +42,31 @@ vim.keymap.set("n", "<leader>p", '"+p', { desc = "Paste from clipboard after cur
 vim.keymap.set("n", "<leader>P", '"+P', { desc = "Paste from clipboard before cursor" })
 vim.keymap.set("v", "<leader>p", '"+p', { desc = "Paste from clipboard" })
 
+-- copy current buffer's relative path
+vim.keymap.set("n", "<leader>cp", function()
+  local relative_path = vim.fn.expand("%")
+  if relative_path == "" then
+    print("No file in current buffer")
+    return
+  end
+
+  vim.fn.setreg("+", relative_path)
+  vim.fn.setreg('"', relative_path)
+  print("Copied: " .. relative_path)
+end, { desc = "Copy current buffer's relative path" })
+
+-- Copy absolute path
+vim.keymap.set("n", "<leader>cP", function()
+  local absolute_path = vim.fn.expand("%:p")
+  if absolute_path == "" then
+    print("No file in current buffer")
+    return
+  end
+  vim.fn.setreg("+", absolute_path)
+  vim.fn.setreg('"', absolute_path)
+  print("Copied absolute: " .. absolute_path)
+end, { desc = "Copy current buffer's absolute path" })
+
 -- Map mouse back/forward to jump list navigation
 vim.keymap.set("n", "<X1Mouse>", "<C-o>", { desc = "Jump back" })
 vim.keymap.set("n", "<X2Mouse>", "<C-i>", { desc = "Jump forward" })
@@ -218,3 +243,32 @@ vim.keymap.set("v", "<leader>jm", function()
   vim.cmd("'<,'>!jq -c .")
   print("JSON minified")
 end, { desc = "Minify selected JSON" })
+
+vim.keymap.set("n", "<leader>na", function()
+  local note = vim.fn.input("Note: ")
+  if note == "" then
+    print("Note cancelled")
+    return
+  end
+
+  local notes_unexpanded_file = "~/notes/_notes.md"
+  local notes_file = vim.fn.expand(notes_unexpanded_file)
+  local timestamp = os.date("%Y-%m-%d %H:%M")
+  local note_line = "* " .. timestamp .. " " .. note
+
+  -- Create directory if it doesn't exist
+  local notes_dir = vim.fn.fnamemodify(notes_file, ":h")
+  if vim.fn.isdirectory(notes_dir) == 0 then
+    vim.fn.mkdir(notes_dir, "p")
+  end
+
+  -- Append to file
+  local file = io.open(notes_file, "a")
+  if file then
+    file:write(note_line .. "\n")
+    file:close()
+    print("Note added to " .. notes_file)
+  else
+    print("Error: Could not write to " .. notes_unexpanded_file)
+  end
+end, { desc = "Add note to ~/nodes/_notes.md" })
