@@ -1,5 +1,4 @@
 return {
-
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
@@ -64,10 +63,9 @@ return {
         incremental_selection = {
           enable = true,
           keymaps = {
-            init_selection = "<C-S-right>",
-            node_incremental = "<C-S-right>",
-            scope_incremental = "<C-s>",
-            node_decremental = "<C-S-left>",
+            init_selection = "<Tab>",
+            node_incremental = "<Tab>",
+            node_decremental = "<S-Tab>",
           },
         },
 
