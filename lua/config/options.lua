@@ -25,3 +25,6 @@ opt.signcolumn = "auto:2"
 vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 
 vim.o.showtabline = 0 -- Hide tabline by default
+
+-- Allow cursor to move beyond end of line in visual block mode
+vim.opt.virtualedit = "block"
