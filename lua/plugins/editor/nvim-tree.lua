@@ -26,6 +26,25 @@ return {
           vim.keymap.set("n", "C", function()
             print("Root change disabled")
           end, { buffer = bufnr, desc = "Disabled", silent = true })
+          -- In nvim-tree on_attach function - this takes precedence in nvim-tree buffers
+          vim.keymap.set("n", "<leader><leader>/", function()
+            local node = api.tree.get_node_under_cursor()
+
+            if node then
+              local path = node.absolute_path
+              if node.type == "file" then
+                path = vim.fn.fnamemodify(path, ":h")
+              end
+
+              require("telescope").extensions.live_grep_args.live_grep_args({
+                cwd = path,
+                additional_args = function()
+                  return { "--hidden" }
+                end,
+                prompt_title = "Live Grep in " .. vim.fn.fnamemodify(path, ":t"),
+              })
+            end
+          end, { buffer = bufnr, desc = "Live grep in selected folder" })
         end,
 
         view = {
