@@ -16,27 +16,10 @@ for key, cmd in pairs(nav_maps) do
   vim.keymap.set("t", key, "<C-\\><C-n>" .. cmd, { desc = "Navigate from terminal" })
 end
 
--- Buffer/tab navigation with bufferline
-vim.keymap.set(
-  "n",
-  "<leader>bc",
-  ":BufferLineCloseRight<CR>:BufferLineCloseLeft<CR>",
-  { noremap = true, desc = "Close all but current" }
-)
-vim.keymap.set("n", "<leader>ls", ":ls<CR>", { noremap = true })
-
--- Quick buffer switching with numbers (reliable)
-for i = 1, 9 do
-  vim.keymap.set("n", "<leader>" .. i, function()
-    -- Get the buffer ID at position i in bufferline
-    local buffers = require("bufferline.state").components
-    if buffers[i] and buffers[i].id then
-      vim.cmd("buffer " .. buffers[i].id)
-    else
-      print("No buffer at position " .. i)
-    end
-  end, { desc = "Go to buffer " .. i })
-end
+vim.keymap.set("n", "<leader>bc", function()
+  vim.cmd("silent! %bdelete|edit#|bdelete#")
+  print("Closed all buffers except current")
+end, { desc = "Close all but current" })
 
 vim.keymap.set("n", "gp", function()
   local start_mark = vim.api.nvim_buf_get_mark(0, "[")
@@ -50,10 +33,6 @@ vim.keymap.set("n", "gp", function()
     print("No recent paste to select")
   end
 end, { desc = "Select last pasted text" })
-
--- Buffer navigation with tab key
-vim.keymap.set("n", "<Tab>", ":BufferLineCycleNext<CR>", { noremap = true, silent = true, desc = "Next buffer" })
-vim.keymap.set("n", "<S-Tab>", ":BufferLineCyclePrev<CR>", { noremap = true, silent = true, desc = "Previous buffer" })
 
 -- Clipboard operations using + register
 vim.keymap.set("n", "<leader>y", '"+y', { desc = "Yank to clipboard" })
