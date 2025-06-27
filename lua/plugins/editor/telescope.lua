@@ -34,6 +34,7 @@ return {
             i = {
               ["<C-p>"] = require("telescope.actions").cycle_history_prev,
               ["<C-n>"] = require("telescope.actions").cycle_history_next,
+              ["<C-s>"] = require("telescope.actions").send_selected_to_qflist + require("telescope.actions").open_qflist, -- SELECTED only
             },
           },
         },
