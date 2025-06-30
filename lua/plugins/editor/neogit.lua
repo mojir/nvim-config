@@ -10,8 +10,8 @@ return {
     keys = {
       { "<leader>gg", "<cmd>Neogit<cr>", desc = "Open Neogit" },
       { "<leader>gc", "<cmd>Neogit commit<cr>", desc = "Git commit" },
-      { "<leader>gpu", "<cmd>Neogit push<cr>", desc = "Git push" },
-      { "<leader>gpo", "<cmd>Neogit pull<cr>", desc = "Git pull" },
+      { "<leader>gP", "<cmd>Neogit push<cr>", desc = "Git push" },
+      { "<leader>gp", "<cmd>Neogit pull<cr>", desc = "Git pull" },
       { "<leader>gl", "<cmd>Neogit log<cr>", desc = "Git log" },
       { "<leader>gb", "<cmd>Neogit branch<cr>", desc = "Git branch" },
     },

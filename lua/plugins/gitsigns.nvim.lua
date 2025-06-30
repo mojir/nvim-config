@@ -12,6 +12,13 @@ return {
           changedelete = { text = "~" },
           untracked = { text = "┆" },
         },
+        signs_staged = {
+          add = { text = "█" },        -- Different character for staged adds
+          change = { text = "█" },     -- Different character for staged changes  
+          delete = { text = "◆" },     -- Different character for staged deletes
+          topdelete = { text = "◆" },  -- Different character for staged topdelete
+          changedelete = { text = "≈" }, -- Different character for staged changedelete
+        },
         current_line_blame = true,
         current_line_blame_opts = {
           virt_text = true,
@@ -50,15 +57,15 @@ return {
           end, { expr = true })
 
           -- Actions
-          map("n", "<leader>gsa", gs.stage_hunk)
-          map("n", "<leader>gsA", gs.stage_buffer)
-          map("n", "<leader>gsr", gs.undo_stage_hunk)
-          map("n", "<leader>gsx", gs.reset_hunk)
-          map("n", "<leader>gsX", gs.reset_buffer)
-          map("n", "<leader>gsp", gs.preview_hunk)
-          map("n", "<leader>gsb", gs.toggle_current_line_blame)
-          map("n", "<leader>gst", gs.toggle_deleted)
-          map("n", "<leader>gsg", gs.refresh)
+          map("n", "<leader>va", gs.stage_hunk)
+          map("n", "<leader>vA", gs.stage_buffer)
+          map("n", "<leader>vr", gs.undo_stage_hunk)
+          map("n", "<leader>vx", gs.reset_hunk)
+          map("n", "<leader>vX", gs.reset_buffer)
+          map("n", "<leader>vp", gs.preview_hunk)
+          map("n", "<leader>vb", gs.toggle_current_line_blame)
+          map("n", "<leader>vt", gs.toggle_deleted)
+          map("n", "<leader>vv", gs.refresh)
         end,
       })
 

@@ -10,7 +10,7 @@ return {
     lazy = false,
     config = function()
       require("venv-selector").setup({})
-      vim.keymap.set("n", "<leader>vs", "<cmd>VenvSelect<cr>", { desc = "Select Python venv" })
+      -- vim.keymap.set("n", "<leader>vs", "<cmd>VenvSelect<cr>", { desc = "Select Python venv" })
     end,
   },
 }

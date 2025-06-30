@@ -79,8 +79,9 @@ return {
       vim.keymap.set("n", "<leader><leader>m", "<cmd>Telescope marks<cr>", { desc = "Show registers" })
       vim.keymap.set("n", "<leader><leader>re", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
       vim.keymap.set("n", "<leader><leader>f", builtin.find_files, { desc = "Telescope find files" })
-      vim.keymap.set("n", "<leader><leader>?", builtin.current_buffer_fuzzy_find, { desc = "Fuzzy find in buffer" })
-      vim.keymap.set("n", "<leader><leader>/", function()
+      vim.keymap.set("n", "<C-f>", builtin.find_files, { desc = "Telescope find files" })
+      vim.keymap.set("n", "<C-/>", builtin.current_buffer_fuzzy_find, { desc = "Fuzzy find in buffer" })
+      vim.keymap.set("n", "<C-Space>", function()
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
             return { "--hidden" }
