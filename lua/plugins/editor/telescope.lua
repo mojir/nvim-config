@@ -1,3 +1,5 @@
+local ripgrep_config = require("config.ripgrep")
+
 return {
   -- Fuzzy finder
   {
@@ -46,13 +48,7 @@ return {
           },
           find_files = {
             hidden = true,
-            find_command = {
-              "rg",
-              "--files",
-              "--hidden",
-              "--glob", "!.git/*",
-              "--glob", "!node_modules/*"
-            },
+            find_command = ripgrep_config.find_files_command, -- Use custom ripgrep command for find_files
           },
         },
         extensions = {
@@ -84,7 +80,7 @@ return {
       vim.keymap.set("n", "<C-Space>", function()
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
-            return { "--hidden" }
+            return ripgrep_config.default_args
           end,
         })
       end, { desc = "Live grep with args (including hidden)" })
@@ -96,7 +92,7 @@ return {
 
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
-            return { "--hidden" }
+            return ripgrep_config.default_args
           end,
           default_text = search_text,
         })
@@ -106,7 +102,7 @@ return {
         local word = vim.fn.expand("<cword>")
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
-            return { "--hidden" }
+            return ripgrep_config.default_args
           end,
           default_text = word,
         })
@@ -117,7 +113,7 @@ return {
         local word = vim.fn.expand("<cWORD>")
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
-            return { "--hidden" }
+            return ripgrep_config.default_args
             end,
           default_text = word,
         })

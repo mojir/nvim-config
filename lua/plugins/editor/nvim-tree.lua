@@ -1,3 +1,5 @@
+local ripgrep_config = require("config.ripgrep")
+
 return {
   {
     "nvim-tree/nvim-tree.lua",
@@ -27,7 +29,7 @@ return {
             print("Root change disabled")
           end, { buffer = bufnr, desc = "Disabled", silent = true })
           -- In nvim-tree on_attach function - this takes precedence in nvim-tree buffers
-          vim.keymap.set("n", "<leader><leader>/", function()
+          vim.keymap.set("n", "<C-/>", function()
             local node = api.tree.get_node_under_cursor()
 
             if node then
@@ -39,7 +41,7 @@ return {
               require("telescope").extensions.live_grep_args.live_grep_args({
                 cwd = path,
                 additional_args = function()
-                  return { "--hidden" }
+                  return ripgrep_config.default_args
                 end,
                 prompt_title = "Live Grep in " .. vim.fn.fnamemodify(path, ":t"),
               })
