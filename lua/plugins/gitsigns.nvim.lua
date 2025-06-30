@@ -58,14 +58,10 @@ return {
 
           -- Actions
           map("n", "<leader>va", gs.stage_hunk)
-          map("n", "<leader>vA", gs.stage_buffer)
-          map("n", "<leader>vr", gs.undo_stage_hunk)
           map("n", "<leader>vx", gs.reset_hunk)
           map("n", "<leader>vX", gs.reset_buffer)
-          map("n", "<leader>vp", gs.preview_hunk)
-          map("n", "<leader>vb", gs.toggle_current_line_blame)
           map("n", "<leader>vt", gs.toggle_deleted)
-          map("n", "<leader>vv", gs.refresh)
+          map("n", "<leader>vv", gs.refresh) --
         end,
       })
 
