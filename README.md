@@ -7,12 +7,13 @@ A modern, feature-rich Neovim configuration built with Lua, optimized for web de
 - **Modern Plugin Management**: Uses [lazy.nvim](https://github.com/folke/lazy.nvim) for fast and efficient plugin loading
 - **LSP Integration**: Full Language Server Protocol support with auto-completion, diagnostics, and formatting
 - **AI-Powered Development**: GitHub Copilot integration with chat interface
-- **Advanced Git Integration**: GitSigns, Diffview, and comprehensive git workflows
+- **Advanced Git Integration**: GitSigns, Diffview, Neogit and comprehensive git workflows
 - **Fuzzy Finding**: Telescope with live grep, file search, and project navigation
 - **Testing Framework**: Neotest with Vitest integration for JavaScript/TypeScript projects
 - **Session Management**: Auto-session with project-specific configurations
 - **Debugging Support**: DAP (Debug Adapter Protocol) with breakpoint persistence
 - **Terminal Integration**: Toggleterm with floating and split terminal options
+- **Enhanced Editing**: Text objects, surround operations, undo tree, and smart text manipulation
 
 ## Directory Structure
 
@@ -25,13 +26,18 @@ A modern, feature-rich Neovim configuration built with Lua, optimized for web de
 │   │   ├── keymaps.lua                # Global keybindings
 │   │   ├── autocmds.lua               # Auto-commands
 │   │   ├── lazy.lua                   # Plugin manager setup
-│   │   └── project.lua                # Project-specific config loader
+│   │   ├── project.lua                # Project-specific config loader
+│   │   └── ripgrep.lua                # Centralized ripgrep configuration
 │   ├── plugins/                       # Plugin configurations
 │   │   ├── editor/                    # Editor enhancement plugins
 │   │   ├── lang/                      # Language-specific plugins
 │   │   ├── copilot/                   # AI assistance plugins
 │   │   └── ui/                        # UI and theme plugins
-│   └── utils/                         # Utility functions
+│   ├── utils/                         # Utility functions
+│   │   └── diagnostic.lua             # Diagnostic utilities
+│   └── my_snippets.lua                # Custom snippet system
+├── data/
+│   └── my_snippets.json               # Custom snippet definitions
 ├── generateDoc.bash                   # Documentation generation script
 └── .gitignore                         # Git ignore file
 ```
@@ -40,9 +46,9 @@ A modern, feature-rich Neovim configuration built with Lua, optimized for web de
 
 ### Core Development
 - **nvim-lspconfig**: Language Server Protocol integration
-- **nvim-cmp**: Auto-completion engine
+- **nvim-cmp**: Auto-completion engine with LuaSnip integration
 - **nvim-treesitter**: Syntax highlighting and text objects
-- **telescope.nvim**: Fuzzy finder and picker
+- **telescope.nvim**: Fuzzy finder and picker with live grep args
 - **gitsigns.nvim**: Git integration with sign column
 
 ### AI Assistance
@@ -50,61 +56,98 @@ A modern, feature-rich Neovim configuration built with Lua, optimized for web de
 - **CopilotChat.nvim**: AI-powered chat interface for code assistance
 
 ### Testing & Debugging
-- **neotest-vitest**: Test runner integration for Vitest
+- **neotest-vitest**: Test runner integration for Vitest with smart configuration detection
 - **nvim-dap**: Debug Adapter Protocol support with breakpoint persistence
 - **nvim-dap-ui**: Debug interface
 
 ### Editor Enhancements
-- **harpoon**: Quick file navigation and bookmarking
+- **harpoon**: Quick file navigation and bookmarking (harpoon2 branch)
 - **yanky.nvim**: Enhanced yank/paste with history
 - **nvim-surround**: Surround text objects manipulation
 - **undotree**: Visual undo history
 - **which-key**: Keybinding discovery
+- **nvim-various-textobjs**: Additional text objects
+- **dial.nvim**: Enhanced increment/decrement for dates, booleans, and more
+- **mini.bufremove**: Smart buffer deletion
+- **nvim-spectre**: Search and replace across project
+- **trouble.nvim**: Enhanced diagnostics display
+- **nvim-bqf**: Better quickfix window
+
+### Git Integration
+- **neogit**: Full-featured Git interface
+- **diffview.nvim**: Advanced diff and merge tool
+- **gitsigns.nvim**: Git signs and hunk operations
 
 ### Language Support
 - **typescript-tools.nvim**: Enhanced TypeScript/JavaScript support
+- **none-ls.nvim**: ESLint integration with auto-fixing
 - **venv-selector.nvim**: Python virtual environment management
 - **emmet-vim**: HTML/CSS expansion
 - **package-info.nvim**: NPM package version information
+- **lazydev.nvim**: Enhanced Lua development for Neovim
+
+### UI and Themes
+- **catppuccin**: Modern colorscheme
+- **lualine.nvim**: Statusline with selection statistics
+- **mini.icons**: Icon provider
+- **nvim-colorizer**: Color highlighting for CSS/web files
 
 ## Key Bindings
 
 ### Leader Key
-Leader key is set to `,` (comma)
+Leader key is set to `<Space>` (space)
 
 ### Essential Shortcuts
-- `<leader>ff` - Find files (Telescope)
-- `<leader>fg` - Live grep search
-- `<leader>fb` - Browse buffers
-- `<leader>gs` - Git status
-- `<Ctrl-n>` - Toggle file tree
-- `<leader>tt` - Toggle terminal
+- `<C-f>` - Find files (Telescope)
+- `<C-Space>` - Live grep search
+- `<leader><leader>b` - Browse buffers
+- `<C-n>` - Toggle file tree
+- `<C-M-n>` - Toggle tree and find current file
+- `<leader>tt` - Toggle floating terminal
+- `<leader>tT` - Toggle horizontal terminal
 - `<leader>cc` - Copilot chat
 
 ### Buffer Management
-- `<Tab>` / `<S-Tab>` - Navigate between buffers
-- `<leader>1-9` - Quick switch to buffer by number
+- `<leader><Tab>` - Toggle to last buffer
 - `<leader>bd` - Delete current buffer (smart)
 - `<leader>bc` - Close all buffers except current
+- Mouse back/forward buttons - Navigate jump list
 
 ### Git Workflow
-- `<leader>ga` - Stage hunk
-- `<leader>gr` - Reset hunk
-- `<leader>gp` - Preview hunk
-- `<leader>gb` - Blame line
-- `<leader>gdo` - Open diff view
+- `<leader>va` - Stage hunk (GitSigns)
+- `<leader>vx` - Reset hunk (GitSigns)
+- `<leader>vX` - Reset buffer (GitSigns)
+- `<leader>gg` - Open Neogit
+- `<leader>gc` - Git commit (Neogit)
+- `<leader>gd` - Toggle diffview
+- `<leader>gh` - File history (Diffview)
 
 ### Testing (JavaScript/TypeScript)
 - `<leader>tr` - Run nearest test
 - `<leader>tf` - Run tests in current file
 - `<leader>ta` - Run all tests
 - `<leader>ts` - Toggle test summary
+- `<leader>td` - Debug nearest test
 
 ### Debugging
 - `<leader>db` - Toggle breakpoint
 - `<leader>dc` - Continue debugging
 - `<leader>ds` - Step over
 - `<leader>di` - Step into
+- `<leader>bl` - List all breakpoints (Telescope)
+
+### Enhanced Search
+- `<leader><leader>G` - Live grep with arguments
+- `<leader><leader>w` - Search word under cursor
+- `<leader><leader>W` - Search WORD under cursor
+- `<leader>S` - Toggle Spectre (project search/replace)
+
+### Diagnostics and Utilities
+- `<leader>cd` - Copy diagnostic under cursor
+- `<leader>cm` - Copy last message
+- `<leader>xx` - Toggle Trouble diagnostics
+- `<leader>ms` - My custom snippets
+- `<leader>na` - Add note to ~/notes/_notes.md
 
 ## Installation
 
@@ -123,6 +166,8 @@ Leader key is set to `,` (comma)
    - Install a Nerd Font for proper icon display
    - Install ripgrep for telescope: `brew install ripgrep`
    - Install Node.js for LSP servers and Copilot
+   - Install jq for JSON formatting: `brew install jq`
+   - Install stylua for Lua formatting: `brew install stylua`
 
 4. **First launch**:
    ```bash
@@ -130,24 +175,17 @@ Leader key is set to `,` (comma)
    ```
    Lazy.nvim will automatically install all plugins on first run.
 
-## Documentation Generation
+## Custom Features
 
-The `generateDoc.bash` script uses `tree-doc` to generate documentation:
+### Smart Snippet System
+The configuration includes a custom snippet system with placeholder expansion:
+- **Date placeholders**: `{date:date}`, `{date:time}`, `{date:day}`, `{date:week}`
+- **File placeholders**: `{file:name}`, `{file:rel}`, `{file:abs}`
+- **Environment**: `{cwd}`
 
-```bash
-#!/bin/bash
-tree-doc -t "NeoVim Configuration" -i "*.lua" | pbcopy
-```
+Access via `<leader>ms` to open the snippet picker.
 
-This script:
-- Generates a tree view of all Lua files
-- Sets the title to "NeoVim Configuration"
-- Copies the output to clipboard (macOS)
-
-Run it with: `./generateDoc.bash`
-
-## Project-Specific Configuration
-
+### Project-Specific Configuration
 The configuration supports project-specific settings through `.nvim.lua` files:
 
 1. Create a `.nvim.lua` file in your project root
@@ -164,29 +202,44 @@ vim.opt.shiftwidth = 4
 vim.keymap.set('n', '<leader>pr', ':!npm run build<CR>')
 ```
 
+### Smart Formatting
+The configuration includes intelligent formatting that chooses the right tool:
+- **JavaScript/TypeScript**: ESLint via none-ls
+- **Lua**: StyLua
+- **Other languages**: LSP formatting
+
+Use `<leader>fo` for smart formatting.
+
 ## Language-Specific Features
 
 ### JavaScript/TypeScript
-- ESLint integration with auto-fixing
-- Prettier formatting
-- Import organization
-- Vitest test runner integration
+- ESLint integration with auto-fixing (`<leader>ef`)
+- Import organization (`<leader>eo`)
+- TypeScript-tools for enhanced TS support
+- Vitest test runner integration with smart detection
+- Emmet support for JSX/TSX
 
 ### Python
-- Virtual environment selector
+- Virtual environment selector (`VenvSelect`)
 - Pyright LSP integration
-- Auto-formatting with Black (when configured)
+- DAP debugging support
 
 ### Lua
 - StyLua formatting integration
-- Neovim API auto-completion
-- Lazy.nvim plugin development support
+- Neovim API auto-completion via lazydev
+- Enhanced development experience for Neovim plugins
 
 ### Web Development
-- Emmet abbreviations
+- Emmet abbreviations (`<C-Z>` leader)
 - Color highlighting for CSS
-- Live server integration
 - Package.json version management
+- Auto-tag closing for HTML/JSX
+
+### Git Integration
+- Comprehensive diff and merge capabilities
+- Interactive staging and unstaging
+- Branch management and history browsing
+- Conflict resolution tools
 
 ## Customization
 
@@ -211,6 +264,9 @@ Edit `lua/config/keymaps.lua` or add to specific plugin configurations.
 ### Theme Customization
 Modify `lua/plugins/ui/catppuccin.lua` or replace with your preferred colorscheme.
 
+### Adding Custom Snippets
+Edit `data/my_snippets.json` to add your own snippets with placeholder support.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -218,7 +274,8 @@ Modify `lua/plugins/ui/catppuccin.lua` or replace with your preferred colorschem
 1. **LSP not working**: Run `:LspInfo` to check server status
 2. **Plugins not loading**: Run `:Lazy sync` to update plugins
 3. **Copilot not working**: Check `:Copilot status` and ensure you're authenticated
-4. **Tests not running**: Verify Vitest is installed in your project
+4. **Tests not running**: Verify Vitest is installed and configuration files exist
+5. **Formatting issues**: Check if appropriate formatters (stylua, eslint_d) are installed
 
 ### Useful Commands
 
@@ -227,14 +284,23 @@ Modify `lua/plugins/ui/catppuccin.lua` or replace with your preferred colorschem
 - `:Lazy` - Plugin manager interface
 - `:LspRestart` - Restart language servers
 - `:ProjectReload` - Reload project-specific configuration
+- `:CloseOutsideRoot` - Close buffers outside project root
+
+### Diagnostic Utilities
+
+The configuration includes utilities for working with diagnostics:
+- Copy diagnostics to clipboard
+- Navigate between diagnostic issues
+- Enhanced diagnostic display via Trouble
 
 ## Performance
 
 This configuration is optimized for performance:
 - Lazy loading of plugins based on file types and commands
-- Efficient use of autocommands
+- Efficient use of autocommands and event handling
 - Minimal startup time with deferred initialization
 - Smart session management to avoid loading unnecessary state
+- Optimized ripgrep configuration for fast searching
 
 ## Contributing
 
