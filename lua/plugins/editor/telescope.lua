@@ -18,6 +18,29 @@ return {
       local telescope = require("telescope")
       local lga_actions = require("telescope-live-grep-args.actions")
 
+      local function get_visual_selection()
+        -- Save the current register content
+        local saved_reg = vim.fn.getreg('"')
+        local saved_regtype = vim.fn.getregtype('"')
+
+        -- Yank the selection
+        vim.cmd("normal! y")
+        local text = vim.fn.getreg('"')
+
+        -- Restore the register
+        vim.fn.setreg('"', saved_reg, saved_regtype)
+
+        return text
+      end
+
+      local function escape_for_regex(text, escape)
+        -- Split by newlines and take the first line
+        local first_line = vim.split(text, "[\r\n]")[1] or ""
+        if escape == true then
+          return first_line:gsub("[%(%)%[%]%{%}%.%*%+%?%^%$%|\\]", "\\%1")
+        end
+          return first_line
+      end
       telescope.setup({
         defaults = {
           file_ignore_patterns = {
@@ -36,7 +59,8 @@ return {
             i = {
               ["<C-p>"] = require("telescope.actions").cycle_history_prev,
               ["<C-n>"] = require("telescope.actions").cycle_history_next,
-              ["<C-s>"] = require("telescope.actions").send_selected_to_qflist + require("telescope.actions").open_qflist, -- SELECTED only
+              ["<C-s>"] = require("telescope.actions").send_selected_to_qflist
+                + require("telescope.actions").open_qflist, -- SELECTED only
             },
           },
         },
@@ -54,17 +78,12 @@ return {
         extensions = {
           live_grep_args = {
             auto_quoting = true, -- enable/disable auto-quoting
-            -- define mappings, e.g.
             mappings = { -- extend mappings
               i = {
                 ["<C-k>"] = lga_actions.quote_prompt(),
                 ["<C-i>"] = lga_actions.quote_prompt({ postfix = " --iglob " }),
               },
             },
-            -- ... also accepts theme settings, for example:
-            -- theme = "dropdown", -- use dropdown theme
-            -- theme = { }, -- use own theme spec
-            -- layout_config = { mirror=true }, -- mirror preview pane
           },
         },
         mouse = false, -- disable mouse support
@@ -72,11 +91,15 @@ return {
 
       telescope.load_extension("live_grep_args")
       local builtin = require("telescope.builtin")
-      vim.keymap.set("n", "<leader><leader>m", "<cmd>Telescope marks<cr>", { desc = "Show marks" })
-      vim.keymap.set("n", "<leader><leader>re", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
-      vim.keymap.set("n", "<leader><leader>f", builtin.find_files, { desc = "Telescope find files" })
       vim.keymap.set("n", "<C-f>", builtin.find_files, { desc = "Telescope find files" })
       vim.keymap.set("n", "<C-/>", builtin.current_buffer_fuzzy_find, { desc = "Fuzzy find in buffer" })
+      vim.keymap.set("v", "<C-/>", function()
+        local search_text = escape_for_regex(get_visual_selection())
+        print("search_text", search_text)
+        builtin.current_buffer_fuzzy_find({
+          default_text = search_text,
+        })
+      end, { desc = "Fuzzy find in buffer" })
       vim.keymap.set("n", "<C-Space>", function()
         builtin.live_grep({
           additional_args = function()
@@ -93,21 +116,28 @@ return {
         })
       end, { desc = "Live grep with args" })
 
-      vim.keymap.set("v", "<leader><leader>g", function()
-        -- Simply yank the selection and get it from the default register
-        vim.cmd("normal! y")
-        local search_text = vim.fn.getreg('"')
-
+      vim.keymap.set("v", "<C-Space>", function()
+        local search_text = escape_for_regex(get_visual_selection(), true)
+        builtin.live_grep({
+          additional_args = function()
+            return ripgrep_config.default_args
+          end,
+          prompt_title = "Live grep",
+          default_text = search_text,
+        })
+      end, { desc = "Live grep" })
+      vim.keymap.set("v", "<leader><leader>G", function()
+        local search_text = escape_for_regex(get_visual_selection(), true)
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
             return ripgrep_config.default_args
           end,
           default_text = search_text,
         })
-      end, { desc = "Live grep with args (including hidden)" })
+      end, { desc = "Live grep with args" })
       -- Search for word under cursor
       vim.keymap.set("n", "<leader><leader>w", function()
-        local word = vim.fn.expand("<cword>")
+        local word = escape_for_regex(vim.fn.expand("<cword>"), true)
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
             return ripgrep_config.default_args
@@ -118,14 +148,17 @@ return {
 
       -- Search for WORD under cursor
       vim.keymap.set("n", "<leader><leader>W", function()
-        local word = vim.fn.expand("<cWORD>")
+        local word = escape_for_regex(vim.fn.expand("<cWORD>"), true)
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
             return ripgrep_config.default_args
-            end,
+          end,
           default_text = word,
         })
       end, { desc = "Search WORD under cursor" })
+
+      vim.keymap.set("n", "<leader><leader>m", "<cmd>Telescope marks<cr>", { desc = "Show marks" })
+      vim.keymap.set("n", "<leader><leader>re", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
 
       vim.keymap.set("n", "<leader><leader>b", builtin.buffers, { desc = "Telescope buffers" })
       vim.keymap.set("n", "<leader><leader>co", builtin.commands, { desc = "Telescope commands" })
@@ -176,7 +209,7 @@ return {
 
       -- Utility
       vim.keymap.set("n", "<leader><leader>cs", builtin.colorscheme, { desc = "Colorschemes" })
-      require('my_snippets').setup()
+      require("my_snippets").setup()
     end,
   },
 }
