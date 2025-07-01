@@ -199,13 +199,13 @@ return {
       vim.keymap.set("n", "<leader><leader>k", builtin.keymaps, { desc = "Keymaps" })
       vim.keymap.set("n", "<leader><leader>a", builtin.autocommands, { desc = "Autocommands" })
       vim.keymap.set("n", "<leader><leader>v", builtin.vim_options, { desc = "Vim options" })
-      vim.keymap.set("n", "<leader><leader>sc", builtin.spell_suggest, { desc = "Spelling suggestions" })
+      vim.keymap.set("n", "<leader><leader>S", builtin.spell_suggest, { desc = "Spelling suggestions" })
 
       -- History and resume
       vim.keymap.set("n", "<leader><leader>p", builtin.pickers, { desc = "Previous pickers" })
       vim.keymap.set("n", "<leader><leader>re", builtin.resume, { desc = "Resume last picker" })
       vim.keymap.set("n", "<leader><leader>ch", builtin.command_history, { desc = "Command history" })
-      vim.keymap.set("n", "<leader><leader>sh", builtin.search_history, { desc = "Search history" })
+      vim.keymap.set("n", "<leader><leader>H", builtin.search_history, { desc = "Search history" })
 
       -- Utility
       vim.keymap.set("n", "<leader><leader>cs", builtin.colorscheme, { desc = "Colorschemes" })
