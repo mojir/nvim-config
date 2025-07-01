@@ -72,18 +72,26 @@ return {
 
       telescope.load_extension("live_grep_args")
       local builtin = require("telescope.builtin")
-      vim.keymap.set("n", "<leader><leader>m", "<cmd>Telescope marks<cr>", { desc = "Show registers" })
+      vim.keymap.set("n", "<leader><leader>m", "<cmd>Telescope marks<cr>", { desc = "Show marks" })
       vim.keymap.set("n", "<leader><leader>re", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
       vim.keymap.set("n", "<leader><leader>f", builtin.find_files, { desc = "Telescope find files" })
       vim.keymap.set("n", "<C-f>", builtin.find_files, { desc = "Telescope find files" })
       vim.keymap.set("n", "<C-/>", builtin.current_buffer_fuzzy_find, { desc = "Fuzzy find in buffer" })
       vim.keymap.set("n", "<C-Space>", function()
+        builtin.live_grep({
+          additional_args = function()
+            return ripgrep_config.default_args
+          end,
+          prompt_title = "Live grep",
+        })
+      end, { desc = "Live grep (no args)" })
+      vim.keymap.set("n", "<leader><leader>G", function()
         require("telescope").extensions.live_grep_args.live_grep_args({
           additional_args = function()
             return ripgrep_config.default_args
           end,
         })
-      end, { desc = "Live grep with args (including hidden)" })
+      end, { desc = "Live grep with args" })
 
       vim.keymap.set("v", "<leader><leader>g", function()
         -- Simply yank the selection and get it from the default register

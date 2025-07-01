@@ -72,6 +72,8 @@ vim.keymap.set("n", "<X1Mouse>", "<C-o>", { desc = "Jump back" })
 vim.keymap.set("n", "<X2Mouse>", "<C-i>", { desc = "Jump forward" })
 vim.keymap.set("n", "<2-X1Mouse>", "<C-o>", { desc = "Jump back (double)" })
 vim.keymap.set("n", "<2-X2Mouse>", "<C-i>", { desc = "Jump forward (double)" })
+vim.keymap.set("n", "<leader><Left>", "<C-o>", { desc = "Jump back" })
+vim.keymap.set("n", "<leader><Right>", "<C-i>", { desc = "Jump forward" })
 
 -- For my muscle memory, map ,c<space> to gc
 vim.keymap.set("n", "<leader>c<space>", "gcc", { desc = "Toggle comment line", remap = true })
@@ -272,3 +274,5 @@ vim.keymap.set("n", "<leader>na", function()
     print("Error: Could not write to " .. notes_unexpanded_file)
   end
 end, { desc = "Add note to ~/nodes/_notes.md" })
+
+ vim.keymap.set("n", "<leader><Tab>", "<C-^>", { desc = "Toggle last buffer" })
