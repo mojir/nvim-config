@@ -39,5 +39,26 @@ return {
       end,
       desc = "Arrow symbols",
     },
+    {
+      "<leader><leader>si",
+      function()
+        require("telescope.builtin").symbols({ sources = { "indicators" } })
+      end,
+      desc = "Indicator symbols",
+    },
+    {
+      "<leader><leader>sc",
+      function()
+        require("telescope.builtin").symbols({ sources = { "currency" } })
+      end,
+      desc = "Indicator symbols",
+    },
+    {
+      "<leader><leader>sf",
+      function()
+        require("telescope.builtin").symbols({ sources = { "fractions" } })
+      end,
+      desc = "Indicator symbols",
+    },
   },
 }

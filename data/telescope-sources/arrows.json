@@ -1,53 +1,202 @@
 [
-  ["→", "right arrow"],
-  ["←", "left arrow"],
-  ["↑", "up arrow"],
-  ["↓", "down arrow"],
-  ["↖", "up left arrow"],
-  ["↗", "up right arrow"],
-  ["↘", "down right arrow"],
-  ["↙", "down left arrow"],
-  ["↔", "left right arrow"],
-  ["↕", "up down arrow"],
-  ["↩", "left arrow with hook"],
-  ["↪", "right arrow with hook"],
-  ["↺", "anticlockwise open circle arrow"],
-  ["↻", "clockwise open circle arrow"],
-  ["⇐", "left double arrow"],
-  ["⇑", "up double arrow"],
-  ["⇒", "right double arrow"],
-  ["⇓", "down double arrow"],
-  ["⇔", "left right double arrow"],
-  ["⇕", "up down double arrow"],
-  ["⟵", "long left arrow"],
-  ["⟶", "long right arrow"],
-  ["⟷", "long left right arrow"],
-  ["⟸", "long left double arrow"],
-  ["⟹", "long right double arrow"],
-  ["⟺", "long left right double arrow"],
-  ["⬅", "left black arrow"],
-  ["⬆", "up black arrow"],
-  ["⬇", "down black arrow"],
-  ["⮕", "right black arrow"],
-  ["▶", "black right pointing triangle"],
-  ["◀", "black left pointing triangle"],
-  ["▲", "black up pointing triangle"],
-  ["▼", "black down pointing triangle"],
-  ["►", "black right pointing pointer"],
-  ["◄", "black left pointing pointer"],
-  ["▸", "black right pointing small triangle"],
-  ["◂", "black left pointing small triangle"],
-  ["▴", "black up pointing small triangle"],
-  ["▾", "black down pointing small triangle"],
-  ["⏩", "black right pointing double triangle"],
-  ["⏪", "black left pointing double triangle"],
-  ["⏫", "black up pointing double triangle"],
-  ["⏬", "black down pointing double triangle"],
-  ["⏭", "next track"],
-  ["⏮", "previous track"],
-  ["⏯", "play pause"],
-  ["⏸", "pause"],
-  ["⏹", "stop"],
-  ["⏺", "record"]
+  [
+    "→",
+    "right arrow"
+  ],
+  [
+    "←",
+    "left arrow"
+  ],
+  [
+    "↑",
+    "up arrow"
+  ],
+  [
+    "↓",
+    "down arrow"
+  ],
+  [
+    "↖",
+    "up left arrow"
+  ],
+  [
+    "↗",
+    "up right arrow"
+  ],
+  [
+    "↘",
+    "down right arrow"
+  ],
+  [
+    "↙",
+    "down left arrow"
+  ],
+  [
+    "↔",
+    "left right arrow"
+  ],
+  [
+    "↕",
+    "up down arrow"
+  ],
+  [
+    "↩",
+    "left arrow with hook"
+  ],
+  [
+    "↪",
+    "right arrow with hook"
+  ],
+  [
+    "↺",
+    "anticlockwise open circle arrow"
+  ],
+  [
+    "↻",
+    "clockwise open circle arrow"
+  ],
+  [
+    "⇐",
+    "left double arrow"
+  ],
+  [
+    "⇑",
+    "up double arrow"
+  ],
+  [
+    "⇒",
+    "right double arrow"
+  ],
+  [
+    "⇓",
+    "down double arrow"
+  ],
+  [
+    "⇔",
+    "left right double arrow"
+  ],
+  [
+    "⇕",
+    "up down double arrow"
+  ],
+  [
+    "⟵",
+    "long left arrow"
+  ],
+  [
+    "⟶",
+    "long right arrow"
+  ],
+  [
+    "⟷",
+    "long left right arrow"
+  ],
+  [
+    "⟸",
+    "long left double arrow"
+  ],
+  [
+    "⟹",
+    "long right double arrow"
+  ],
+  [
+    "⟺",
+    "long left right double arrow"
+  ],
+  [
+    "⬅",
+    "left black arrow"
+  ],
+  [
+    "⬆",
+    "up black arrow"
+  ],
+  [
+    "⬇",
+    "down black arrow"
+  ],
+  [
+    "⮕",
+    "right black arrow"
+  ],
+  [
+    "▶",
+    "black right pointing triangle"
+  ],
+  [
+    "◀",
+    "black left pointing triangle"
+  ],
+  [
+    "▲",
+    "black up pointing triangle"
+  ],
+  [
+    "▼",
+    "black down pointing triangle"
+  ],
+  [
+    "►",
+    "black right pointing pointer"
+  ],
+  [
+    "◄",
+    "black left pointing pointer"
+  ],
+  [
+    "▸",
+    "black right pointing small triangle"
+  ],
+  [
+    "◂",
+    "black left pointing small triangle"
+  ],
+  [
+    "▴",
+    "black up pointing small triangle"
+  ],
+  [
+    "▾",
+    "black down pointing small triangle"
+  ],
+  [
+    "⏩",
+    "black right pointing double triangle"
+  ],
+  [
+    "⏪",
+    "black left pointing double triangle"
+  ],
+  [
+    "⏫",
+    "black up pointing double triangle"
+  ],
+  [
+    "⏬",
+    "black down pointing double triangle"
+  ],
+  [
+    "⏭",
+    "next track"
+  ],
+  [
+    "⏮",
+    "previous track"
+  ],
+  [
+    "⏯",
+    "play pause"
+  ],
+  [
+    "⏸",
+    "pause"
+  ],
+  [
+    "⏹",
+    "stop"
+  ],
+  [
+    "⏺",
+    "record"
+  ]
 ]
-
