@@ -56,66 +56,130 @@ Expected output should show connected boxes with ASCII art.
 return {
   {
     name = "easygraph-integration",
-    dir = vim.fn.stdpath("config"), -- Use local config as plugin directory
+    dir = vim.fn.stdpath("config"),
     config = function()
-      local outputs = {
-        "boxart",
-        "ascii",
-        "svg",
-        "html",
-        "dot",
+      -- Configuration
+      local config = {
+        outputs = { "boxart", "ascii", "svg", "html", "dot" },
+        default_output = "boxart",
+        popup = {
+          min_width = 60,
+          min_height = 15,
+          max_width_ratio = 0.9,
+          max_height_ratio = 0.9,
+          border = "rounded"
+        },
+        keymaps = {
+          close = { "<Esc>", "q" },
+          yank = "y",
+          next_format = "<Tab>",
+          prev_format = "<S-Tab>",
+          help = "?",
+          -- Direct format selection
+          formats = {
+            b = "boxart",
+            a = "ascii", 
+            s = "svg",
+            h = "html",
+            d = "dot"
+          }
+        }
       }
-      local keys = {
-        b = 1,
-        a = 2,
-        s = 3,
-        h = 4,
-        d = 5,
+
+      -- State management
+      local state = {
+        current_output = config.default_output
       }
-      local output_index = 1 -- Default to boxart
-        
-      -- Function to get visual selection or entire buffer
-      local function get_diagram_content()
-        local mode = vim.fn.mode()
-        
-        if mode == "v" or mode == "V" or mode == "\22" then
-          -- Visual mode - get selection
-          local start_pos = vim.fn.getpos("'<")
-          local end_pos = vim.fn.getpos("'>")
-          
-          local lines = vim.api.nvim_buf_get_lines(0, start_pos[2] - 1, end_pos[2], false)
-          
-          if mode == "v" then
-            -- Character-wise selection
-            if #lines == 1 then
-              lines[1] = string.sub(lines[1], start_pos[3], end_pos[3])
-            else
-              lines[1] = string.sub(lines[1], start_pos[3])
-              lines[#lines] = string.sub(lines[#lines], 1, end_pos[3])
-            end
-          elseif mode == "\22" then
-            -- Block selection
-            for i = 1, #lines do
-              lines[i] = string.sub(lines[i], start_pos[3], end_pos[3])
-            end
+
+      -- Utility functions
+      local function find_output_index(output_name)
+        for i, name in ipairs(config.outputs) do
+          if name == output_name then
+            return i
           end
-          
-          return table.concat(lines, "\n")
+        end
+        return 1
+      end
+
+      local function cycle_output(direction)
+        local current_index = find_output_index(state.current_output)
+        local new_index = ((current_index + direction - 1) % #config.outputs) + 1
+        state.current_output = config.outputs[new_index]
+        return state.current_output
+      end
+
+      local function get_title(output_format)
+        return string.format(" Graph-Easy - %s ( Tab/S-Tab/y/? ) ", output_format)
+      end
+
+      -- Content extraction
+      local function get_visual_selection()
+        local start_pos = vim.fn.getpos("'<")
+        local end_pos = vim.fn.getpos("'>")
+        local mode = vim.fn.visualmode()
+        
+        local lines = vim.api.nvim_buf_get_lines(0, start_pos[2] - 1, end_pos[2], false)
+        
+        if #lines == 0 then
+          return ""
+        end
+        
+        if mode == "v" then
+          -- Character-wise selection
+          if #lines == 1 then
+            lines[1] = string.sub(lines[1], start_pos[3], end_pos[3])
+          else
+            lines[1] = string.sub(lines[1], start_pos[3])
+            lines[#lines] = string.sub(lines[#lines], 1, end_pos[3])
+          end
+        elseif mode == "\22" then
+          -- Block selection
+          for i = 1, #lines do
+            lines[i] = string.sub(lines[i], start_pos[3], end_pos[3])
+          end
+        end
+        -- Visual line mode uses full lines as-is
+        
+        return table.concat(lines, "\n")
+      end
+
+      local function get_diagram_content(use_selection)
+        if use_selection then
+          return get_visual_selection()
         else
-          -- Normal mode - get entire buffer
           local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
           return table.concat(lines, "\n")
         end
       end
 
-      -- Function to generate diagram with specified format
-      local function generate_diagram(content)
-        local cmd = "graph-easy --as=" .. outputs[output_index]
+      -- Graph-Easy integration
+      local function validate_graph_easy()
+        local handle = io.popen("command -v graph-easy 2>/dev/null")
+        if not handle then
+          return false, "Could not check for graph-easy command"
+        end
+        
+        local result = handle:read("*a")
+        handle:close()
+        
+        if result == "" then
+          return false, "graph-easy command not found. Please install Graph::Easy Perl module."
+        end
+        
+        return true, nil
+      end
+
+      local function generate_diagram(content, output_format)
+        if content:match("^%s*$") then
+          return false, "No content provided"
+        end
+
+        local cmd = string.format("graph-easy --as=%s", output_format)
         local output = vim.fn.system(cmd, content)
         local exit_code = vim.v.shell_error
         
         if exit_code ~= 0 then
-          return false, "graph-easy error (exit code " .. exit_code .. "):\n" .. output
+          return false, string.format("graph-easy error (exit code %d):\n%s", exit_code, output)
         elseif output == "" then
           return false, "graph-easy produced no output"
         else
@@ -123,101 +187,167 @@ return {
         end
       end
 
-      local function get_title(output)
-        return " Graph-Easy - " .. output .. " ( Tab / S-Tab / y / ? ) "
-      end
-
-      -- Function to create and show popup with ASCII diagram
-      local function show_ascii_popup(ascii_content, original_content)
-        -- Split content into lines
-        local lines = vim.split(ascii_content, "\n")
-        
-        -- Calculate popup dimensions
+      -- UI Management
+      local function calculate_popup_size(content_lines)
         local width = 0
-        for _, line in ipairs(lines) do
+        for _, line in ipairs(content_lines) do
           width = math.max(width, vim.fn.strdisplaywidth(line))
         end
         
-        local height = #lines
-        local max_width = math.floor(vim.o.columns * 0.8)
-        local max_height = math.floor(vim.o.lines * 0.8)
-        local min_width = 60
-        local min_height = 15
+        local height = #content_lines
+        local max_width = math.floor(vim.o.columns * config.popup.max_width_ratio)
+        local max_height = math.floor(vim.o.lines * config.popup.max_height_ratio)
 
-        width = math.max(math.min(width + 4, max_width), min_width)
-        height = math.max(math.min(height + 2, max_height), min_height)
+        width = math.max(math.min(width + 4, max_width), config.popup.min_width)
+        height = math.max(math.min(height + 2, max_height), config.popup.min_height)
         
-        -- State variables
-        local stored_content = original_content
+        return width, height
+      end
+
+      local function update_popup_content(buf, win, original_content)
+        local success, result = generate_diagram(original_content, state.current_output)
         
-        -- Create popup buffer
+        if not success then
+          -- Show error in buffer
+          local error_lines = vim.split("Error: " .. result, "\n")
+          vim.bo[buf].modifiable = true
+          vim.bo[buf].readonly = false
+          vim.api.nvim_buf_set_lines(buf, 0, -1, false, error_lines)
+          vim.bo[buf].readonly = true
+          vim.bo[buf].modifiable = false
+          return
+        end
+
+        local new_lines = vim.split(result, "\n")
+        local new_width, new_height = calculate_popup_size(new_lines)
+        
+        -- Update buffer content
+        vim.bo[buf].modifiable = true
+        vim.bo[buf].readonly = false
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, new_lines)
+        vim.bo[buf].readonly = true
+        vim.bo[buf].modifiable = false
+        
+        -- Update window size and title
+        vim.api.nvim_win_set_config(win, {
+          relative = "editor",
+          width = new_width,
+          height = new_height,
+          col = math.floor((vim.o.columns - new_width) / 2),
+          row = math.floor((vim.o.lines - new_height) / 2),
+          style = "minimal",
+          border = config.popup.border,
+          title = get_title(state.current_output),
+          title_pos = "center",
+        })
+      end
+
+      local function setup_popup_keymaps(buf, win, original_content, close_fn)
+        local opts = { buffer = buf, noremap = true, silent = true, nowait = true }
+        
+        -- Close keymaps
+        for _, key in ipairs(config.keymaps.close) do
+          vim.keymap.set("n", key, close_fn, opts)
+        end
+        
+        -- Yank content
+        vim.keymap.set("n", config.keymaps.yank, function()
+          local current_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+          local content = table.concat(current_lines, "\n")
+          vim.fn.setreg('"', content)
+          vim.fn.setreg('+', content)
+          print(string.format("Diagram (%s) yanked to clipboard", state.current_output))
+          close_fn()
+        end, opts)
+        
+        -- Format cycling
+        vim.keymap.set("n", config.keymaps.next_format, function()
+          cycle_output(1)
+          update_popup_content(buf, win, original_content)
+        end, opts)
+        
+        vim.keymap.set("n", config.keymaps.prev_format, function()
+          cycle_output(-1)
+          update_popup_content(buf, win, original_content)
+        end, opts)
+        
+        -- Direct format selection
+        for key, format in pairs(config.keymaps.formats) do
+          vim.keymap.set("n", key, function()
+            if vim.tbl_contains(config.outputs, format) then
+              state.current_output = format
+              update_popup_content(buf, win, original_content)
+            end
+          end, opts)
+        end
+        
+        -- Help
+        vim.keymap.set("n", config.keymaps.help, function()
+          local help_lines = {
+            "Graph-Easy Keybindings:",
+            "",
+            string.format("%s - Close popup", table.concat(config.keymaps.close, "/")),
+            string.format("%s - Copy to clipboard", config.keymaps.yank),
+            string.format("%s - Next format", config.keymaps.next_format),
+            string.format("%s - Previous format", config.keymaps.prev_format),
+            "",
+            "Direct format selection:"
+          }
+          
+          for key, format in pairs(config.keymaps.formats) do
+            table.insert(help_lines, string.format("  %s - %s", key, format))
+          end
+          
+          print(table.concat(help_lines, "\n"))
+        end, opts)
+      end
+
+      local function show_diagram_popup(content, use_selection)
+        local original_content = get_diagram_content(use_selection)
+        
+        if original_content:match("^%s*$") then
+          print("No content to generate diagram from")
+          return
+        end
+        
+        -- Validate graph-easy availability
+        local valid, error_msg = validate_graph_easy()
+        if not valid then
+          print("Error: " .. error_msg)
+          return
+        end
+        
+        -- Generate initial content
+        local success, result = generate_diagram(original_content, state.current_output)
+        if not success then
+          print("Failed to generate diagram: " .. result)
+          return
+        end
+        
+        local lines = vim.split(result, "\n")
+        local width, height = calculate_popup_size(lines)
+        
+        -- Create popup
         local buf = vim.api.nvim_create_buf(false, true)
-        local win_opts = {
+        local win = vim.api.nvim_open_win(buf, true, {
           relative = "editor",
           width = width,
           height = height,
           col = math.floor((vim.o.columns - width) / 2),
           row = math.floor((vim.o.lines - height) / 2),
           style = "minimal",
-          border = "rounded",
-          title = get_title(outputs[output_index]),
+          border = config.popup.border,
+          title = get_title(state.current_output),
           title_pos = "center",
-        }
+        })
         
-        local win = vim.api.nvim_open_win(buf, true, win_opts)
-        
-        -- Function to update buffer content and title
-        local function update_display()
-          local success, result = generate_diagram(stored_content)
-          
-          if success then
-            local new_lines = vim.split(result, "\n")
-            vim.bo[buf].modifiable = true
-            vim.bo[buf].readonly = false
-            vim.api.nvim_buf_set_lines(buf, 0, -1, false, new_lines)
-            vim.bo[buf].readonly = true
-            vim.bo[buf].modifiable = false
-            
-            -- Recalculate dimensions if needed
-            local new_width = 0
-            for _, line in ipairs(new_lines) do
-              new_width = math.max(new_width, vim.fn.strdisplaywidth(line))
-            end
-            local new_height = #new_lines
-            
-            new_width = math.max(math.min(new_width + 4, max_width), min_width)
-            new_height = math.max(math.min(new_height + 2, max_height), min_height)
-            
-            -- Update window with complete config
-            vim.api.nvim_win_set_config(win, {
-              relative = "editor",
-              width = new_width,
-              height = new_height,
-              col = math.floor((vim.o.columns - new_width) / 2),
-              row = math.floor((vim.o.lines - new_height) / 2),
-              style = "minimal",
-              border = "rounded",
-              title = get_title(outputs[output_index]),
-              title_pos = "center",
-            })
-          else
-            -- Show error
-            local error_lines = vim.split(result, "\n")
-            vim.bo[buf].modifiable = true
-            vim.bo[buf].readonly = false
-            vim.api.nvim_buf_set_lines(buf, 0, -1, false, error_lines)
-            vim.bo[buf].readonly = true
-            vim.bo[buf].modifiable = false
-          end
-        end
-        
-        -- Initial setup
+        -- Setup buffer
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-        vim.bo[buf].modifiable = false
         vim.bo[buf].readonly = true
+        vim.bo[buf].modifiable = false
         vim.bo[buf].filetype = "text"
         
-        -- Function definitions
+        -- Cleanup function
         local function close_popup()
           if vim.api.nvim_win_is_valid(win) then
             vim.api.nvim_win_close(win, true)
@@ -227,38 +357,9 @@ return {
           end
         end
         
-        local function yank_content()
-          local current_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-          local content = table.concat(current_lines, "\n")
-          vim.fn.setreg('"', content)
-          vim.fn.setreg('+', content)
-          print("ASCII diagram yanked to clipboard")
-          close_popup()
-        end
+        -- Setup keymaps
+        setup_popup_keymaps(buf, win, original_content, close_popup)
         
-        local function circle_output(direction)
-          output_index = (output_index + direction - 1) % #outputs + 1
-          update_display()
-        end
-        
-        -- Buffer-local keymaps
-        local opts = { buffer = buf, noremap = true, silent = true, nowait = true }
-        vim.keymap.set("n", "<Esc>", close_popup, opts)
-        vim.keymap.set("n", "q", close_popup, opts)
-        vim.keymap.set("n", "y", yank_content, opts)
-        vim.keymap.set("n", "<Tab>", function() circle_output(1) end, opts)
-        vim.keymap.set("n", "<S-Tab>", function() circle_output(-1) end, opts)
-
-        for key, index in pairs(keys) do
-          vim.keymap.set("n", key, function()
-            output_index = index
-            update_display()
-          end, opts)
-        end 
-        vim.keymap.set("n", "?", function()
-          print("Keybindings: <Esc>/q = close, Tab / S-Tab = toggle boxart, y = copy to clipboard, ? = help, initial letter for output format")
-        end, opts)
-
         -- Auto-close on focus lost
         vim.api.nvim_create_autocmd("WinLeave", {
           buffer = buf,
@@ -267,42 +368,31 @@ return {
         })
       end
 
-      -- Function to generate ASCII diagram
-      local function generate_ascii_diagram()
-        local content = get_diagram_content()
-        
-        if content == "" then
-          print("No content to generate diagram from")
-          return
-        end
-        
-        -- Generate initial diagram with boxart (default)
-        local success, result = generate_diagram(content)
-        if not success then
-          print("Boxart generation failed")
-        end
-        
-        show_ascii_popup(result, content)
+      -- Public interface
+      local function generate_ascii_diagram(use_selection)
+        show_diagram_popup(nil, use_selection)
       end
 
-      -- Create user command
+      -- Commands and keymaps
       vim.api.nvim_create_user_command("GraphEasy", function(opts)
         if opts.range == 2 then
           -- Visual mode - temporarily enter visual mode to capture selection
           vim.cmd("normal! gv")
-          vim.defer_fn(generate_ascii_diagram, 10)
+          vim.defer_fn(function() 
+            generate_ascii_diagram(true)
+          end, 10)
         else
           -- Normal mode
-          generate_ascii_diagram()
+          generate_ascii_diagram(false)
         end
       end, {
         range = true,
-        desc = "Generate ASCII diagram using graph-easy CLI",
+        desc = "Generate diagram using graph-easy CLI",
       })
 
-      -- Optional: Add keymap
-      vim.keymap.set("n", "<leader>ad", ":GraphEasy<CR>", { desc = "Generate ASCII diagram (buffer)" })
-      vim.keymap.set("v", "<leader>ad", ":GraphEasy<CR>", { desc = "Generate ASCII diagram (selection)" })
+      -- Keymaps
+      vim.keymap.set("n", "<leader>ad", ":GraphEasy<CR>", { desc = "Generate diagram (buffer)" })
+      vim.keymap.set("v", "<leader>ad", ":GraphEasy<CR>", { desc = "Generate diagram (selection)" })
     end,
   },
 }
