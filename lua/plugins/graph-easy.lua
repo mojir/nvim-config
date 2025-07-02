@@ -10,8 +10,9 @@ INSTALLATION STEPS (macOS):
 1. Install cpanminus (Perl package manager):
    $ brew install cpanminus
 
-2. Install Graph::Easy module:
+2. Install Graph::Easy modules:
    $ cpanm Graph::Easy
+   $ cpanm Graph::Easy::As_svg
 
 3. Add Perl paths to your shell configuration (~/.bashrc, ~/.zshrc, etc.):
    export PATH="$HOME/perl5/bin:$PATH"
