@@ -22,7 +22,7 @@ INSTALLATION STEPS (macOS):
 
 5. Verify installation:
    $ graph-easy --version
-   $ echo "[ A ] -> [ B ]" | graph-easy --as=boxart
+   $ echo "[A] -> [B]" | graph-easy --as=boxart
 
 ALTERNATIVE INSTALLATION METHODS:
 
@@ -287,14 +287,52 @@ return {
 Graph-Easy ASCII Output - Shapes That Matter
 ===============================================
 
+http://bloodgate.com/perl/graph/manual/syntax.html
+
 SHAPES THAT WORK IN ASCII/BOXART:
 
 1. Regular nodes (default rectangular boxes):
-[ Normal Node ]
+[ Normal node ]
+[ Bold border node ] { border: bold; }
+[ Broad border node ] { border: broad; }
+[ Wide border node ] { border: wide; }
+[ Wide-dash border node ] { border: bold-dash; }
+[ Double border node ] { border: double; }
+[ Dotted border node ] { border: dotted; }
+[ Dashed border node ] { border: dashed; }
+[ Dot-dashed border node ] { border: dot-dash; }
+[ Dot-dot-dashed border node ] { border: dot-dot-dash; }
 
-┌─────────────┐
-│ Normal Node │
-└─────────────┘
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃      Bold border node      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+▛▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▜
+▌     Broad border node      ▐
+▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟
+┌−−−−−−−−−−−−−−−−−−−−−−−−−−−−┐
+╎     Dashed border node     ╎
+└−−−−−−−−−−−−−−−−−−−−−−−−−−−−┘
+┌-·-·-·-·-·-·-·-·-·-·-·-·-·-·┐
+!   Dot-dashed border node   !
+└-·-·-·-·-·-·-·-·-·-·-·-·-·-·┘
+┌·-··-··-··-··-··-··-··-··-··┐
+│ Dot-dot-dashed border node │
+└·-··-··-··-··-··-··-··-··-··┘
+┌⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯┐
+⋮     Dotted border node     ⋮
+└⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯⋯┘
+╔════════════════════════════╗
+║     Double border node     ║
+╚════════════════════════════╝
+┌────────────────────────────┐
+│        Normal node         │
+└────────────────────────────┘
+██████████████████████████████
+█      Wide border node      █
+██████████████████████████████
+┏ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━┓
+╻   Wide-dash border node    ╻
+┗ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━ ━┛
 
 2. Invisible nodes (take up no space):
 [ Start ] -> [ ] -> [ End ]
@@ -304,14 +342,14 @@ SHAPES THAT WORK IN ASCII/BOXART:
 └───────┘             └─────┘
 
 3. Point nodes (very small, no text):
-[ A ] -> [ B ] { shape: point; }
+[A] -> [B] { shape: point; }
 
 ┌───┐
 │ A │ ──>   ★
 └───┘
 
 4. Edge-shaped nodes (appear inline with edges):
-[ A ] -> [ connector ] { shape: edge; } -> [ B ]
+[A] -> [ connector ] { shape: edge; } -> [B]
 
 ┌───┐      connector        ┌───┐
 │ A │ ──> -------------───> │ B │
@@ -319,9 +357,9 @@ SHAPES THAT WORK IN ASCII/BOXART:
 
 5. Different edge styles:
 I. Solid line:
-[ A ] - solid -> [ B ]
-[ A ] -- [ B ]
-[ A ] <-> [ B ]
+[A] - solid -> [B]
+[A] -- [B]
+[A] <-> [B]
 
   ┌──────────────┐
   │              │
@@ -332,79 +370,93 @@ I. Solid line:
   └──────────────┘
 
 II. Dashed line:
-[ C ] -  dashed - > [ D ]
-[ C ] - - [ D ]
-[ C ] <- - > [ D ]
+[A] -  dashed - > [B]
+[A] - - [B]
+[A] <- - > [B]
 
   ┌╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┐
   ╵               ╵
 ┌───┐  dashed   ┌───┐
-│ C │ ╴╴╴╴╴╴╴╴> │ D │
+│ A │ ╴╴╴╴╴╴╴╴> │ B │
 └───┘           └───┘
   ∧               ∧
   ╵╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┘
 
 III. Dotted line:
-[ E ] . dotted .> [ F ]
-[ E ] .. [ F]
-[ E ] <.> [ F ]
+[A] . dotted .> [B]
+[A] .. [ B]
+[A] <.> [B]
 
   ┌···············┐
   :               :
 ┌───┐  dotted   ┌───┐
-│ E │ ········> │ F │
+│ A │ ········> │ B │
 └───┘           └───┘
   ∧               ∧
   └···············┘
 
 IV. Double line:
-[ G ] = double => [ H ] 
-[ G ] <=> [ H ] 
+[A] = double => [B] 
+[A] <=> [B] 
 
   ╔═══════════════╗
   ∨               ∨
 ┌───┐  double   ┌───┐
-│ G │ ════════> │ H │
+│ A │ ════════> │ B │
 └───┘           └───┘
 
 V. Dot-dashed line:
-[ I ] .- dot-dashed .-> [ J ]
-[ I ] .- [ J ]
-[ I ] <.-> [ J ]
+[A] .- dot-dashed .-> [B]
+[A] .- [B]
+[A] <.-> [B]
 
   ┌-·-·-·-·-·-·-·-·-·-┐
   !                   !
 ┌───┐  dot-dashed   ┌───┐
-│ I │ ·-·-·-·-·-·-> │ J │
+│ A │ ·-·-·-·-·-·-> │ B │
 └───┘               └───┘
   ∧                   ∧
   └-·-·-·-·-·-·-·-·-·-┘
 
 VI. Dot-dot-dashed line:
-[ K ] ..- dot-dot-dashed ..-> [ L ]
-[ K ] ..- [ L ]
-[ K ] <..-> [ L ]
+[A] ..- dot-dot-dashed ..-> [B]
+[A] ..- [B]
+[A] <..-> [B]
 
   ┌··-··-··-··-··-··-··-··-·┐
   !                         !
 ┌────┐  dot-dot-dashed    ┌────┐
-│ K  │ ··-··-··-··-··-··> │ L  │
+│ A  │ ··-··-··-··-··-··> │ B  │
 └────┘                    └────┘
   ∧                         ∧
   └··-··-··-··-··-··-··-··-·┘
 
 VII. Double-dashed line:
-[ M ] =  double-dashed = > [ N ]
-[ M ] = = [ N ]
-[ M ] <= > [ N ]
+[A] =  double-dashed = > [B]
+[A] = = [B]
+[A] <= > [B]
 
   ╔ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═╗
   ∥                      ∥
 ┌───┐  double-dashed   ┌───┐
-│ M │ ═ ═ ═ ═ ═ ═ ═ ═> │ N │
+│ A │ ═ ═ ═ ═ ═ ═ ═ ═> │ B │
 └───┘                  └───┘
   ∧                      ∧
   ╚ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═ ═╝
+
+VIII. Wave line:
+[A] ~ wave ~> [B]
+[A] ~~ [B]
+[A] <~> [B]
+
+  ┌∼∼∼∼∼∼∼∼∼∼∼∼∼┐
+  ≀             ≀
+┌───┐  wave   ┌───┐
+│ A │ ∼∼∼∼∼∼> │ B │
+└───┘         └───┘
+  ∧             ∧
+  └∼∼∼∼∼∼∼∼∼∼∼∼∼┘
+
 
 SHAPES THAT DON'T MATTER IN ASCII:
 - diamond (renders as regular box)
@@ -414,32 +466,25 @@ SHAPES THAT DON'T MATTER IN ASCII:
 
 USEFUL ASCII EXAMPLES:
 
-Simple Flow:
-[ Start ] -> [ Process ] -> [ End ]
+Simple flow with decision:
+[ Input ] -> [ Valid? ] - Yes -> [ Process ]
+[ Valid? ] - No -> [ Error ] --> [ Input ]
 
-┌───────┐     ┌─────────┐     ┌─────┐
-│ Start │ ──> │ Process │ ──> │ End │
-└───────┘     └─────────┘     └─────┘
-
-With decision (diamond ignored in ASCII):
-[ Input ] -> [ Valid? ] -> [ Process ]
-[ Valid? ] -> [ Error ] -> [ Input ]
-
-  ┌─────────────────────────────┐
-  ∨                             │
-┌───────┐     ┌─────────┐     ┌───────┐
-│ Input │ ──> │ Valid?  │ ──> │ Error │
-└───────┘     └─────────┘     └───────┘
+  ┌───────────────────────────────┐
+  ∨                               │
+┌───────┐     ┌─────────┐  No   ┌───────┐
+│ Input │ ──> │ Valid?  │ ────> │ Error │
+└───────┘     └─────────┘       └───────┘
                 │
-                │
+                │ Yes
                 ∨
               ┌─────────┐
               │ Process │
               └─────────┘
 
 Using invisible nodes for routing:
-[ A ] -> [ ] { shape: invisible; } -> [ C ]
-[ B ] -> [ ] { shape: invisible; }
+[A] -> [ ] { shape: invisible; } -> [C]
+[B] -> [ ] { shape: invisible; }
 
 ┌───┐             ┌───┐
 │ A │ ──>     ──> │ C │
@@ -482,16 +527,16 @@ Complex routing with invisible nodes:
                  └────────┘
 
 Real-world process:
-[ Request ] -> [ Validate ] -> [ Process ] -> [ Response ]
-[ Validate ] -> [ Error Log ] { shape: edge; } -> [ ] { shape: invisible; }
+[ Request ] -> [ Valid? ] - Yes -> [ Process ] -> [ Response ]
+[ Valid? ] - No -> [ Error Log ] { shape: edge; } -> [ ] { shape: invisible; }
 
-┌─────────┐     ┌──────────┐      Error Log
-│ Request │ ──> │ Validate │ ──> -------------───>
-└─────────┘     └──────────┘
+┌─────────┐     ┌─────────┐  No    Error Log
+│ Request │ ──> │ Valid?  │ ────> -------------───>
+└─────────┘     └─────────┘
                   │
-                  │
+                  │ Yes
                   ∨
-                ┌──────────┐     ┌───────────┐
-                │ Process  │ ──> │ Response  │
-                └──────────┘     └───────────┘
+                ┌─────────┐       ┌───────────┐
+                │ Process │ ────> │ Response  │
+                └─────────┘       └───────────┘
 ]]
