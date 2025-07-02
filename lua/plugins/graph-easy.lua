@@ -75,6 +75,7 @@ return {
           next_format = "<Tab>",
           prev_format = "<S-Tab>",
           help = "?",
+          open_browser = "o",
           -- Direct format selection
           formats = {
             b = "boxart",
@@ -85,6 +86,9 @@ return {
           }
         }
       }
+
+      -- Track temp files for cleanup
+      local temp_files = {}
 
       -- State management
       local state = {
@@ -109,7 +113,7 @@ return {
       end
 
       local function get_title(output_format)
-        return string.format(" Graph-Easy - %s ( Tab/S-Tab/y/? ) ", output_format)
+        return string.format(" Graph-Easy - %s ( ? for help ) ", output_format)
       end
 
       -- Content extraction
@@ -152,7 +156,115 @@ return {
         end
       end
 
-      -- Graph-Easy integration
+      -- Browser integration
+      local function open_in_browser(content, format)
+        local temp_dir = vim.fn.tempname()
+        vim.fn.mkdir(temp_dir, "p")
+        
+        -- Use timestamp and random number for unique filename
+        local timestamp = os.time()
+        local random = math.random(1000, 9999)
+        local filename = string.format("%s/graph_easy_%s_%d_%d.html", temp_dir, format, timestamp, random)
+        
+        -- Wrap all content in HTML structure
+        local html_content
+        if format == "html" and (content:match("<!DOCTYPE") or content:match("<html")) then
+          -- Already proper HTML
+          html_content = content
+        else
+          -- Wrap in HTML with appropriate styling
+          local body_content = content
+          local style = ""
+          
+          if format == "svg" then
+            style = [[
+        body { margin: 20px; text-align: center; }
+        svg { max-width: 100%; height: auto; border: 1px solid #ccc; }
+]]
+          else
+            -- ASCII, boxart, dot, or other text formats
+            style = [[
+        body { 
+          font-family: 'Monaco', 'Consolas', 'Courier New', monospace; 
+          white-space: pre; 
+          margin: 20px; 
+          line-height: 1.2;
+          font-size: 12px;
+        }
+]]
+          end
+          
+          html_content = string.format([[
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Graph-Easy Output (%s)</title>
+    <style>%s    </style>
+</head>
+<body>%s</body>
+</html>]], format, style, body_content)
+        end
+        
+        -- Write content to file
+        local file = io.open(filename, "w")
+        if not file then
+          print("Error: Could not create temporary file")
+          return false
+        end
+        
+        file:write(html_content)
+        file:close()
+        
+        -- Track temp file for cleanup
+        table.insert(temp_files, temp_dir)
+        
+        -- Force open in browser using -a flag with a browser app
+        local browsers = {
+          "Google Chrome",
+          "Safari", 
+          "Firefox",
+          "Microsoft Edge"
+        }
+        
+        local cmd = nil
+        for _, browser in ipairs(browsers) do
+          if vim.fn.system(string.format("mdfind 'kMDItemDisplayName == \"%s\"'", browser)):match("%S") then
+            cmd = string.format("open -a '%s' '%s'", browser, filename)
+            break
+          end
+        end
+        
+        -- Fallback: force any browser
+        if not cmd then
+          cmd = string.format("open -a Safari '%s'", filename)
+        end
+        
+        vim.fn.system(cmd)
+        
+        -- Clean up after delay
+        vim.defer_fn(function()
+          vim.fn.delete(temp_dir, "rf")
+        end, 5000)
+        
+        return true
+      end
+
+      -- Setup cleanup on exit
+      local function cleanup_temp_files()
+        for _, temp_dir in ipairs(temp_files) do
+          if vim.fn.isdirectory(temp_dir) == 1 then
+            vim.fn.delete(temp_dir, "rf")
+          end
+        end
+        temp_files = {}
+      end
+
+      -- Register cleanup handlers
+      vim.api.nvim_create_autocmd("VimLeavePre", {
+        group = vim.api.nvim_create_augroup("GraphEasyCleanup", { clear = true }),
+        callback = cleanup_temp_files,
+      })
       local function validate_graph_easy()
         local handle = io.popen("command -v graph-easy 2>/dev/null")
         if not handle then
@@ -260,7 +372,16 @@ return {
           close_fn()
         end, opts)
         
-        -- Format cycling
+        -- Open in browser
+        vim.keymap.set("n", config.keymaps.open_browser, function()
+          local current_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+          local content = table.concat(current_lines, "\n")
+          
+          if open_in_browser(content, state.current_output) then
+            print(string.format("Opened %s diagram in browser", state.current_output))
+            -- Don't close popup - user can continue working
+          end
+        end, opts)
         vim.keymap.set("n", config.keymaps.next_format, function()
           cycle_output(1)
           update_popup_content(buf, win, original_content)
@@ -288,6 +409,7 @@ return {
             "",
             string.format("%s - Close popup", table.concat(config.keymaps.close, "/")),
             string.format("%s - Copy to clipboard", config.keymaps.yank),
+            string.format("%s - Open in browser", config.keymaps.open_browser),
             string.format("%s - Next format", config.keymaps.next_format),
             string.format("%s - Previous format", config.keymaps.prev_format),
             "",
