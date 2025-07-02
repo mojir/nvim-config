@@ -58,6 +58,22 @@ return {
     name = "easygraph-integration",
     dir = vim.fn.stdpath("config"), -- Use local config as plugin directory
     config = function()
+      local outputs = {
+        "boxart",
+        "ascii",
+        "svg",
+        "html",
+        "dot",
+      }
+      local keys = {
+        b = 1,
+        a = 2,
+        s = 3,
+        h = 4,
+        d = 5,
+      }
+      local output_index = 1 -- Default to boxart
+        
       -- Function to get visual selection or entire buffer
       local function get_diagram_content()
         local mode = vim.fn.mode()
@@ -93,8 +109,8 @@ return {
       end
 
       -- Function to generate diagram with specified format
-      local function generate_diagram(content, use_boxart)
-        local cmd = use_boxart and "graph-easy --as=boxart" or "graph-easy"
+      local function generate_diagram(content)
+        local cmd = "graph-easy --as=" .. outputs[output_index]
         local output = vim.fn.system(cmd, content)
         local exit_code = vim.v.shell_error
         
@@ -107,8 +123,12 @@ return {
         end
       end
 
+      local function get_title(output)
+        return " Graph-Easy - " .. output .. " ( Tab / S-Tab / y / ? ) "
+      end
+
       -- Function to create and show popup with ASCII diagram
-      local function show_ascii_popup(ascii_content, original_content, initial_boxart_state)
+      local function show_ascii_popup(ascii_content, original_content)
         -- Split content into lines
         local lines = vim.split(ascii_content, "\n")
         
@@ -121,14 +141,13 @@ return {
         local height = #lines
         local max_width = math.floor(vim.o.columns * 0.8)
         local max_height = math.floor(vim.o.lines * 0.8)
-        local min_width = 40
+        local min_width = 60
         local min_height = 15
 
         width = math.max(math.min(width + 4, max_width), min_width)
         height = math.max(math.min(height + 2, max_height), min_height)
         
         -- State variables
-        local is_boxart = initial_boxart_state
         local stored_content = original_content
         
         -- Create popup buffer
@@ -141,7 +160,7 @@ return {
           row = math.floor((vim.o.lines - height) / 2),
           style = "minimal",
           border = "rounded",
-          title = " Graph-Easy " .. (is_boxart and "boxart" or "plain") .. " ( ? for help ) ",
+          title = get_title(outputs[output_index]),
           title_pos = "center",
         }
         
@@ -149,7 +168,7 @@ return {
         
         -- Function to update buffer content and title
         local function update_display()
-          local success, result = generate_diagram(stored_content, is_boxart)
+          local success, result = generate_diagram(stored_content)
           
           if success then
             local new_lines = vim.split(result, "\n")
@@ -170,7 +189,6 @@ return {
             new_height = math.max(math.min(new_height + 2, max_height), min_height)
             
             -- Update window with complete config
-            local new_title = " Graph-Easy " .. (is_boxart and "boxart" or "plain") .. " ? for help "
             vim.api.nvim_win_set_config(win, {
               relative = "editor",
               width = new_width,
@@ -179,7 +197,7 @@ return {
               row = math.floor((vim.o.lines - new_height) / 2),
               style = "minimal",
               border = "rounded",
-              title = new_title,
+              title = get_title(outputs[output_index]),
               title_pos = "center",
             })
           else
@@ -218,9 +236,8 @@ return {
           close_popup()
         end
         
-        local function toggle_boxart()
-          is_boxart = not is_boxart
-          print("Switching to " .. (is_boxart and "boxart" or "plain") .. " mode...")
+        local function circle_output(direction)
+          output_index = (output_index + direction - 1) % #outputs + 1
           update_display()
         end
         
@@ -229,9 +246,17 @@ return {
         vim.keymap.set("n", "<Esc>", close_popup, opts)
         vim.keymap.set("n", "q", close_popup, opts)
         vim.keymap.set("n", "y", yank_content, opts)
-        vim.keymap.set("n", "b", toggle_boxart, opts)
+        vim.keymap.set("n", "<Tab>", function() circle_output(1) end, opts)
+        vim.keymap.set("n", "<S-Tab>", function() circle_output(-1) end, opts)
+
+        for key, index in pairs(keys) do
+          vim.keymap.set("n", key, function()
+            output_index = index
+            update_display()
+          end, opts)
+        end 
         vim.keymap.set("n", "?", function()
-          print("Keybindings: <Esc>/q = close, b = toggle boxart, y = copy to clipboard, ? = help")
+          print("Keybindings: <Esc>/q = close, Tab / S-Tab = toggle boxart, y = copy to clipboard, ? = help, initial letter for output format")
         end, opts)
 
         -- Auto-close on focus lost
@@ -252,13 +277,12 @@ return {
         end
         
         -- Generate initial diagram with boxart (default)
-        local success, result = generate_diagram(content, true)
-        
-        if success then
-          show_ascii_popup(result, content, true) -- Pass original content and initial state
-        else
-          show_ascii_popup(result, content, true) -- Show error but still store content
+        local success, result = generate_diagram(content)
+        if not success then
+          print("Boxart generation failed")
         end
+        
+        show_ascii_popup(result, content)
       end
 
       -- Create user command
