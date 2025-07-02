@@ -11,3 +11,4 @@ vim.g.maplocalleader = " "
 
 -- Load configuration modules
 require("config")
+require("lits").setup()
