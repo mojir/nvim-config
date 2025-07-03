@@ -335,7 +335,6 @@ local function create_result_popup(result, show_insert_option)
   local opts = { buffer = state.result_buf, noremap = true, silent = true, nowait = true }
 
   -- QUIT/CANCEL options - return to editor
-  vim.keymap.set("n", "<Esc>", close_result_popup, opts)
   vim.keymap.set("n", "q", close_result_popup, opts)
 
   if show_insert_option then
@@ -411,7 +410,6 @@ local function create_program_window(content)
   -- Set up keymaps
   local opts = { buffer = state.editor_buf, noremap = true, silent = true }
 
-  vim.keymap.set("n", "<Esc>", close_editor, opts)
   vim.keymap.set("n", "q", close_editor, opts)
   vim.keymap.set("n", "<C-e>", evaluate_and_show, opts)
   vim.keymap.set("i", "<C-e>", evaluate_and_show, opts)
@@ -448,13 +446,13 @@ local function create_program_window(content)
       "<C-e>     - Evaluate and preview result",
       "<C-Enter> - Evaluate and insert result directly",
       "<C-c>     - Clear editor content",
-      "<Esc>/q   - Close editor",
+      "q         - Close editor",
       "?         - Show this help",
       "",
       "In result popup:",
       "i/<Enter> - Insert result at cursor",
       "y         - Copy result to clipboard",
-      "q/<Esc>   - Cancel and return to editor",
+      "q         - Cancel and return to editor",
     }
     print(table.concat(help_lines, "\n"))
   end, opts)
