@@ -423,6 +423,11 @@ local function create_program_window(content)
     -- Clear all content
     vim.api.nvim_buf_set_lines(state.editor_buf, 0, -1, false, { "" })
   end, opts)
+  vim.keymap.set("n", "d", function()
+    local url = "https://mojir.github.io/lits/"
+    vim.fn.system("open " .. vim.fn.shellescape(url))
+    print("Opened Lits documentation in browser")
+  end, opts)
   -- Close window when clicking outside
   vim.api.nvim_create_autocmd("WinLeave", {
     buffer = state.editor_buf,
@@ -446,6 +451,7 @@ local function create_program_window(content)
       "<C-e>     - Evaluate and preview result",
       "<C-Enter> - Evaluate and insert result directly",
       "<C-c>     - Clear editor content",
+      "d         - Open Lits documentation",
       "q         - Close editor",
       "?         - Show this help",
       "",
