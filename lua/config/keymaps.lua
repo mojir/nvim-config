@@ -1,7 +1,10 @@
 -- Global keymaps that don't belong to specific plugins
 
+vim.keymap.set("n", "<leader>lu", ":Lazy update<CR>", { desc = "Lazy update" })
+
 -- Simple keymap to quit all
 vim.keymap.set("n", "<leader>qa", ":qall<CR>", { desc = "Quit all" })
+vim.keymap.set("n", "<leader>qw", ":wqall<CR>", { desc = "Quit all" })
 
 -- Window navigation with Option+Arrow keys
 local nav_maps = {
