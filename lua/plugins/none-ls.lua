@@ -87,9 +87,10 @@ return {
             })
           end
 
-          -- ESLint-specific keymaps
-          vim.keymap.set("n", "<leader>ef", function()
+          -- ESLint-specific keymaps  group under <leader>l (with other LSP actions)
+          vim.keymap.set("n", "<leader>lF", function()
             vim.lsp.buf.code_action({
+              desc = "ESLint: Fix all issues",
               context = {
                 only = { "source.fixAll" },
                 diagnostics = {},
@@ -99,8 +100,9 @@ return {
             print("ESLint fixes applied")
           end, { buffer = bufnr, desc = "ESLint: Fix all issues" })
 
-          vim.keymap.set("n", "<leader>eo", function()
+          vim.keymap.set("n", "<leader>lo", function()
             vim.lsp.buf.code_action({
+              desc = "ESLint: Organize imports",
               context = {
                 only = { "source.organizeImports" },
                 diagnostics = {},

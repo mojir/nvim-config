@@ -1,6 +1,6 @@
 -- Global keymaps that don't belong to specific plugins
 
-vim.keymap.set("n", "<leader>lu", ":Lazy update<CR>", { desc = "Lazy update" })
+vim.keymap.set("n", "<leader>U", ":Lazy update<CR>", { desc = "Lazy update" })
 
 -- Simple keymap to quit all
 vim.keymap.set("n", "<leader>qa", ":qall<CR>", { desc = "Quit all" })
@@ -208,7 +208,7 @@ local function smart_format()
 end
 
 -- Keep your explicit formatter
-vim.keymap.set({ "n" }, "<leader>fo", smart_format, { desc = "Format with appropriate formatter" })
+vim.keymap.set({ "n" }, "<leader>lf", smart_format, { desc = "Format with appropriate formatter" })
 
 -- JSON formatting with jq
 vim.keymap.set("v", "<leader>jf", function()
@@ -278,4 +278,5 @@ vim.keymap.set("n", "<leader>na", function()
   end
 end, { desc = "Add note to ~/nodes/_notes.md" })
 
- vim.keymap.set("n", "<leader><Tab>", "<C-^>", { desc = "Toggle last buffer" })
+vim.keymap.set("n", "<leader><Tab>", "<C-^>", { desc = "Toggle last buffer" })
+

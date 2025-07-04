@@ -142,37 +142,51 @@ return {
         callback = function(ev)
           local opts = { buffer = ev.buf }
 
+          local function lsp_map(mode, lhs, rhs, desc)
+            vim.keymap.set(mode, lhs, rhs, vim.tbl_extend("force", opts, { desc = desc }))
+          end
+
           -- Navigation
-          vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-          vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
-          vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
-          vim.keymap.set("n", "go", vim.lsp.buf.type_definition, opts)
-          vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-          vim.keymap.set("n", "gs", vim.lsp.buf.signature_help, opts)
+          lsp_map("n", "gd", vim.lsp.buf.definition, "Go to definition")
+          lsp_map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
+          lsp_map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
+          lsp_map("n", "go", vim.lsp.buf.type_definition, "Go to type definition")
+          lsp_map("n", "gr", vim.lsp.buf.references, "Go to references")
+          lsp_map("n", "gs", vim.lsp.buf.signature_help, "Show signature help")
 
           -- Information
-          vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-          vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+          lsp_map("n", "K", function()
+            vim.lsp.buf.hover({
+              border = "rounded",
+              title = " Info ",
+              title_pos = "center",
+            })
+          end, "Show hover information")
+          lsp_map("n", "<C-k>", vim.lsp.buf.signature_help, "Show signature help")
 
           -- Actions
-          vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-          vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+          lsp_map("n", "<leader>lr", vim.lsp.buf.rename, "LSP Rename")
+          lsp_map("n", "<leader>lu", "<cmd>TSToolsRemoveUnused<cr>", "Remove unused imports") 
+          lsp_map("n", "<leader>li", "<cmd>TSToolsAddMissingImports<cr>", "Add missing imports")
+          lsp_map({ "n", "v" }, "<leader>la", vim.lsp.buf.code_action, "LSP Code Action")
+          lsp_map("n", "<leader>le", vim.diagnostic.open_float, "LSP Error details")
+          lsp_map("n", "<leader>li", "<cmd>LspInfo<cr>", "LSP Info")
+          lsp_map("n", "<leader>lR", "<cmd>LspRestart<cr>", "LSP Restart")
 
           -- Diagnostics
-          vim.keymap.set("n", "[d", function()
+          lsp_map("n", "[d", function()
             vim.diagnostic.jump({ count = -1 })
-          end, opts)
-          vim.keymap.set("n", "]d", function()
+          end, "Previous diagnostic")
+          lsp_map("n", "]d", function()
             vim.diagnostic.jump({ count = 1 })
-          end, opts)
-          vim.keymap.set("n", "<leader>dl", vim.diagnostic.setloclist, opts)
+          end, "Next diagnostic")
 
           -- Workspace management
-          vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, opts)
-          vim.keymap.set("n", "<leader>wr", vim.lsp.buf.remove_workspace_folder, opts)
-          vim.keymap.set("n", "<leader>wl", function()
-            print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-          end, opts)
+          -- vim.keymap.set("n", "<leader>wa", vim.lsp.buf.add_workspace_folder, opts)
+          -- vim.keymap.set("n", "<leader>wr", vim.lsp.buf.remove_workspace_folder, opts)
+          -- vim.keymap.set("n", "<leader>wl", function()
+          --   print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+          -- end, opts)
         end,
       })
 
