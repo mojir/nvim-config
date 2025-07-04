@@ -101,7 +101,7 @@ local function open_content_in_new_buffer()
   -- Create new buffer with lits content
   vim.cmd("enew")
   vim.api.nvim_buf_set_lines(0, 0, -1, false, vim.split(content, "\n"))
-  vim.bo.filetype = "lisp"
+  vim.bo.filetype = "javascript"
 
   print("Lits content opened in new buffer")
 end
@@ -136,7 +136,7 @@ local function create_program_window(content)
 
   local lines = vim.split(content, "\n")
   vim.api.nvim_buf_set_lines(editor_buf, 0, -1, false, lines)
-  vim.bo[editor_buf].filetype = "lisp" -- Close enough for basic syntax highlighting
+  vim.bo[editor_buf].filetype = "javascript"
 
   -- Create window
   local editor_win = vim.api.nvim_open_win(editor_buf, true, {
