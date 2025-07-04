@@ -304,15 +304,6 @@ return {
       vim.cmd("cabbrev wqall Wqall")
       
       vim.keymap.set({"n", "v", "i"}, "<C-t>", _G._ENHANCED_FLOAT_TOGGLE, { desc = "Toggle floating terminal with state restoration" })
-      vim.keymap.set("n", "<leader>tT", function()
-        vim.cmd("ToggleTerm direction=horizontal")
-        vim.defer_fn(function()
-          if vim.bo.buftype == "terminal" then
-            vim.cmd("startinsert")
-          end
-        end, CURSOR_RESTORE_DELAY)
-      end, { desc = "Toggle horizontal terminal and enter insert mode" })
-      vim.keymap.set("n", "<leader>tt", _G._ENHANCED_FLOAT_TOGGLE, { desc = "Toggle floating terminal (legacy)" })
       
       -- Cleanup
       vim.api.nvim_create_autocmd("VimLeavePre", {

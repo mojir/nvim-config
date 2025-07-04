@@ -65,7 +65,7 @@ return {
         end,
       })
 
-      vim.keymap.set("n", "<leader>gR", function()
+      vim.keymap.set("n", "<leader>lR", function()
         local current_file = vim.fn.expand("%:p")
         if current_file == "" then
           print("No file to unstage")
