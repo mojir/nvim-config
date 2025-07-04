@@ -4,7 +4,7 @@ vim.keymap.set("n", "<leader>lu", ":Lazy update<CR>", { desc = "Lazy update" })
 
 -- Simple keymap to quit all
 vim.keymap.set("n", "<leader>qa", ":qall<CR>", { desc = "Quit all" })
-vim.keymap.set("n", "<leader>qw", ":wqall<CR>", { desc = "Save and quit all" })
+vim.keymap.set("n", "<leader>qw", ":Wqall!<CR>", { desc = "Save and quit all!" })
 
 -- Window navigation with Option+Arrow keys
 local nav_maps = {
