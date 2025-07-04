@@ -43,26 +43,28 @@ local function show_help()
     "Lits Editor Help:",
     "",
     "Evaluation:",
-    "  <C-Enter> - Evaluate and insert result directly",
-    "  <C-e>     - Evaluate and preview result",
+    "  <leader><CR> - Evaluate and insert result directly",
+    "  <leader>e    - Evaluate and preview result",
     "",
     "File Operations:",
     "  <leader>s - Save As (prompts for filename)",
     "  <leader>o - Open file (Telescope picker)",
     "  <leader>n - New file",
     "  <leader>d - Delete current file",
+    "  <leader>f - Open folder in Finder",
     "",
     "Other:",
-    "  <C-l>     - Open Lits Playground with current code",
-    "  <C-q> / q - Close editor",
-    "  ?         - Show this help",
+    "  <leader>b - Open content in new buffer",
+    "  <leader>l - Open Lits Playground with current code",
+    "  <Esc>     - Close editor",
+    "  <leader>? - Show this help",
     "",
     "Note: Files auto-save when closing editor",
     "",
     "In result popup:",
-    "  i/<Enter> - Insert result at cursor",
+    "  i         - Insert result at cursor",
     "  y         - Copy result to clipboard",
-    "  q         - Cancel and return to editor",
+    "  q/<Esc>   - Cancel and return to editor",
   }
   print(table.concat(help_lines, "\n"))
 end
@@ -166,6 +168,7 @@ local function create_program_window(content)
   vim.keymap.set("n", "<leader>o", files.open_file_picker, opts)
   vim.keymap.set("n", "<leader>n", files.new_file_dialog, opts)
   vim.keymap.set("n", "<leader>d", files.delete_current_file, opts)
+  vim.keymap.set("n", "<leader>f", files.copy_current_file_path, opts)
 
   -- Open content in new buffer
   vim.keymap.set("n", "<leader>b", open_content_in_new_buffer, opts)
@@ -181,9 +184,6 @@ local function create_program_window(content)
     buffer = editor_buf,
     callback = should_close_editor,
   })
-
-  -- Enter insert mode
-  vim.cmd("startinsert")
 end
 
 function M.open(use_selection)

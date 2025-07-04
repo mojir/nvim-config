@@ -63,6 +63,10 @@ function M.delete_program(filename)
   local filepath = M.get_program_path(filename)
   if vim.fn.filereadable(filepath) == 1 then
     local ok = pcall(vim.fn.delete, filepath)
+    if ok then
+      -- Clean up empty directories after deletion
+      M.cleanup_empty_directories(filepath)
+    end
     return ok
   end
   return false
@@ -186,6 +190,82 @@ function M.evaluate_lits()
   else
     return false, string.format("Lits evaluation failed (exit code %d):\n%s", exit_code, result)
   end
+end
+
+function M.normalize_path(path)
+  -- Resolve relative paths and normalize
+  return vim.fn.resolve(vim.fn.fnamemodify(path, ":p"))
+end
+
+function M.is_safe_path(filename)
+  local programs_dir = vim.fn.resolve(config.get().programs_dir)
+  local full_path = M.normalize_path(M.get_program_path(filename))
+  
+  -- Check if the resolved path is within the programs directory
+  return full_path:sub(1, #programs_dir) == programs_dir
+end
+
+function M.ensure_directory_for_file(filepath)
+  local dir = vim.fn.fnamemodify(filepath, ":h")
+  if vim.fn.isdirectory(dir) == 0 then
+    local ok, err = pcall(vim.fn.mkdir, dir, "p")
+    if not ok then
+      vim.notify("Failed to create directory: " .. err, vim.log.levels.ERROR)
+      return false
+    end
+  end
+  return true
+end
+
+function M.cleanup_empty_directories(filepath)
+  local programs_dir = config.get().programs_dir
+  local dir = vim.fn.fnamemodify(filepath, ":h")
+  
+  -- Don't remove the root programs directory
+  while dir ~= programs_dir and dir ~= vim.fn.fnamemodify(dir, ":h") do
+    -- Check if directory is empty
+    local files = vim.fn.glob(dir .. "/*", false, true)
+    if #files == 0 then
+      pcall(vim.fn.delete, dir, "d")
+      dir = vim.fn.fnamemodify(dir, ":h")
+    else
+      break -- Directory not empty, stop
+    end
+  end
+end
+
+-- Update the save_program function
+function M.save_program(content, filename)
+  filename = filename or state.get().current_file
+
+  -- Validate path safety
+  if not M.is_safe_path(filename) then
+    vim.notify("Invalid file path: cannot save outside programs directory", vim.log.levels.ERROR)
+    return false
+  end
+
+  if not M.ensure_programs_dir() then
+    return false
+  end
+
+  local filepath = M.get_program_path(filename)
+  
+  -- Ensure directory exists for the file
+  if not M.ensure_directory_for_file(filepath) then
+    return false
+  end
+
+  local ok, err = pcall(function()
+    local lines = vim.split(content, "\n")
+    vim.fn.writefile(lines, filepath)
+  end)
+
+  if not ok then
+    vim.notify("Failed to save program: " .. err, vim.log.levels.ERROR)
+    return false
+  end
+
+  return true
 end
 
 return M

@@ -19,18 +19,21 @@ function M.list_files()
   
   local files = {}
   
-  -- Use Vim's glob function instead of external find command
-  local pattern = programs_dir .. "*.lits"
+  -- Use recursive glob to find all .lits files
+  local pattern = programs_dir .. "**/*.lits"
   local found_files = vim.fn.glob(pattern, false, true)
   
   for _, filepath in ipairs(found_files) do
-    local filename = vim.fn.fnamemodify(filepath, ":t")
-    table.insert(files, filename)
+    -- Get relative path by removing the programs_dir prefix
+    local relative_path = filepath:sub(#programs_dir + 1)
+    table.insert(files, relative_path)
   end
+  
+  -- Sort files for consistent ordering
+  table.sort(files)
   
   return files
 end
-
 function M.delete_program(filename)
   local filepath = utils.get_program_path(filename)
   if vim.fn.filereadable(filepath) == 1 then
@@ -53,21 +56,17 @@ function M.get_starting_file()
   return config.get().default_file
 end
 
-function M.save_as_dialog()
-  local current_state = state.get()
-  local current_name = current_state.current_file
-  local default_name = ""
-  
-  -- Suggest the full name with .lits extension
-  if current_name == config.get().default_file then
-    default_name = ""
-  else
-    default_name = current_name -- Keep full filename including .lits
-  end
-  
-  local filename = vim.fn.input("Save as: ", default_name)
+-- Extract the save logic into a separate function
+-- Extract the save logic into a separate function
+function M.process_save_as(filename, current_name, current_state)
   if filename == "" or filename:match("^%s*$") then
     print("Save cancelled")
+    return false
+  end
+  
+  -- Check for path traversal attempts
+  if filename:match("%.%.") then
+    print("Error: Cannot save outside programs directory")
     return false
   end
   
@@ -88,6 +87,26 @@ function M.save_as_dialog()
   if filename == config.get().default_file then
     print("Cannot save as " .. config.get().default_file .. " (reserved for scratch)")
     return false
+  end
+  
+  -- Additional safety check using utils
+  if not utils.is_safe_path(filename) then
+    print("Error: Cannot save outside programs directory")
+    return false
+  end
+  
+  -- Check if file exists and is different from current file
+  if M.file_exists(filename) and filename ~= current_name then
+    local choice = vim.fn.confirm(
+      filename .. " already exists. Overwrite?",
+      "&Overwrite\n&Cancel",
+      2
+    )
+    
+    if choice ~= 1 then
+      print("Save cancelled")
+      return false
+    end
   end
   
   -- Get current content
@@ -132,6 +151,88 @@ function M.save_as_dialog()
   
   return true
 end
+function M.save_as_dialog()
+  local current_state = state.get()
+  local current_name = current_state.current_file
+  
+  -- Check if telescope is available
+  local ok = pcall(require, "telescope")
+  if not ok then
+    -- Fallback to input prompt
+    local default_name = ""
+    if current_name == config.get().default_file then
+      default_name = ""
+    else
+      default_name = current_name
+    end
+    
+    local filename = vim.fn.input("Save as: ", default_name)
+    return M.process_save_as(filename, current_name, current_state)
+  end
+  
+  -- Temporarily disable any autocmds that might close the picker
+  local autocmd_group = current_state.autocmd_group
+  if autocmd_group then
+    pcall(vim.api.nvim_del_augroup_by_id, autocmd_group)
+  end
+  
+  local files = M.list_files()
+  
+  -- Use vim.schedule to ensure proper timing
+  vim.schedule(function()
+    require("telescope.pickers").new({}, {
+      prompt_title = "Save As (type new name or select existing)",
+      finder = require("telescope.finders").new_table({
+        results = files,
+      }),
+      sorter = require("telescope.config").values.generic_sorter({}),
+      attach_mappings = function(prompt_bufnr, map)
+        -- Custom action for Enter
+        require("telescope.actions").select_default:replace(function()
+          local picker = require("telescope.actions.state").get_current_picker(prompt_bufnr)
+          local filename = picker:_get_prompt()
+          
+          -- If empty prompt but has selection, use selected file
+          if filename == "" then
+            local selection = require("telescope.actions.state").get_selected_entry()
+            if selection then
+              filename = selection.value
+            end
+          end
+          
+          require("telescope.actions").close(prompt_bufnr)
+          
+          -- Recreate autocmd group after telescope closes
+          if autocmd_group then
+            local new_group = vim.api.nvim_create_augroup("LitsPlugin", { clear = true })
+            state.set_autocmd_group(new_group)
+          end
+          
+          if filename ~= "" then
+            M.process_save_as(filename, current_name, current_state)
+          else
+            print("Save cancelled")
+          end
+        end)
+        
+        -- Handle escape/cancel
+        map("i", "<Esc>", function()
+          require("telescope.actions").close(prompt_bufnr)
+          
+          -- Recreate autocmd group after telescope closes
+          if autocmd_group then
+            local new_group = vim.api.nvim_create_augroup("LitsPlugin", { clear = true })
+            state.set_autocmd_group(new_group)
+          end
+          
+          print("Save cancelled")
+        end)
+        
+        return true
+      end,
+    }):find()
+  end)
+end
 
 function M.open_file_picker()
   -- If called from within Lits editor, temporarily close it
@@ -169,7 +270,7 @@ function M.open_file_picker()
   end
   
   -- Check if telescope is available
-  local ok, telescope = pcall(require, "telescope")
+  local ok = pcall(require, "telescope")
   if not ok then
     print("Telescope not available")
     if was_in_editor then
@@ -371,6 +472,21 @@ function M.new_file_dialog()
     print("Failed to create file")
     return false
   end
+end
+
+function M.copy_current_file_path()
+  local current_state = state.get()
+  local current_file = current_state.current_file
+  
+  if current_file == config.get().default_file then
+    print("Cannot copy path for scratch file (not saved)")
+    return
+  end
+  
+  local filepath = utils.get_program_path(current_file)
+  vim.fn.setreg('"', filepath)
+  vim.fn.setreg('+', filepath)
+  print("Copied path: " .. filepath)
 end
 
 return M
