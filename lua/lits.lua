@@ -258,6 +258,8 @@ local function close_result_popup()
 end
 
 local function close_editor()
+  close_result_popup()
+
   if state.editor_win and vim.api.nvim_win_is_valid(state.editor_win) then
     -- Auto-save on close if content changed
     if state.editor_buf and vim.api.nvim_buf_is_valid(state.editor_buf) then
@@ -381,6 +383,67 @@ local function evaluate_and_insert()
   end
 end
 
+local function should_close_editor()
+  vim.defer_fn(function()
+    if state.editor_win and vim.api.nvim_win_is_valid(state.editor_win) then
+      local current_win = vim.api.nvim_get_current_win()
+      -- Close if we're in a window that's not part of Lits
+      if current_win ~= state.editor_win and current_win ~= state.result_win then
+        close_editor()
+      end
+    end
+  end, 100)
+end
+
+local function open_lits_playground()
+  local base_url = "https://mojir.github.io/lits/"
+
+  -- Get current editor content
+  local current_content = ""
+  if state.editor_buf and vim.api.nvim_buf_is_valid(state.editor_buf) then
+    local content_lines = vim.api.nvim_buf_get_lines(state.editor_buf, 0, -1, false)
+    current_content = "// Comming from NeoVim Lits plugin\n" .. table.concat(content_lines, "\n")
+  end
+
+  -- Create JSON object
+  local json_obj = vim.fn.json_encode({ ["lits-code"] = current_content })
+
+  -- Encode like JavaScript's btoa(encodeURIComponent(json))
+  -- First URI encode, then base64 encode
+  local uri_encoded = vim.fn
+    .system(
+      "printf '%s' "
+        .. vim.fn.shellescape(json_obj)
+        .. " | python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read(), safe=\"\"))'"
+    )
+    :gsub("\n$", "")
+  local base64_encoded = vim.fn.system("printf '%s' " .. vim.fn.shellescape(uri_encoded) .. " | base64"):gsub("\n$", "")
+
+  -- Build final URL
+  local url = base_url .. "?state=" .. base64_encoded
+
+  vim.fn.system("open " .. vim.fn.shellescape(url))
+  print("Opened Lits documentation with current code")
+end
+
+local function show_help()
+  local help_lines = {
+    "Lits Editor Help:",
+    "",
+    "<C-Enter> - Evaluate and insert result directly",
+    "<C-e>     - Evaluate and preview result",
+    "<C-q> / q - Close editor",
+    "<C-l>     - Open Lits Playground with current code",
+    "?         - Show this help",
+    "",
+    "In result popup:",
+    "i/<Enter> - Insert result at cursor",
+    "y         - Copy result to clipboard",
+    "q         - Cancel and return to editor",
+  }
+  print(table.concat(help_lines, "\n"))
+end
+
 local function create_program_window(content)
   content = content or ""
   local width, height = calculate_window_size(content)
@@ -410,59 +473,30 @@ local function create_program_window(content)
   -- Set up keymaps
   local opts = { buffer = state.editor_buf, noremap = true, silent = true }
 
-  vim.keymap.set("n", "q", close_editor, opts)
-  vim.keymap.set("n", "<C-e>", evaluate_and_show, opts)
-  vim.keymap.set("i", "<C-e>", evaluate_and_show, opts)
   vim.keymap.set("n", "<C-CR>", evaluate_and_insert, opts)
   vim.keymap.set("i", "<C-CR>", evaluate_and_insert, opts)
-  vim.keymap.set("i", "<C-c>", function()
-    -- Clear all content
-    vim.api.nvim_buf_set_lines(state.editor_buf, 0, -1, false, { "" })
+  vim.keymap.set("n", "<C-e>", evaluate_and_show, opts)
+  vim.keymap.set("i", "<C-e>", evaluate_and_show, opts)
+  vim.keymap.set("i", "<C-l>", open_lits_playground, opts)
+  vim.keymap.set("n", "<C-l>", open_lits_playground, opts)
+  vim.keymap.set("n", "q", close_editor, opts)
+  vim.keymap.set("n", "<C-q>", close_editor, opts)
+  vim.keymap.set("i", "<C-q>", function()
+    vim.cmd("stopinsert")
+    close_editor()
   end, opts)
-  vim.keymap.set("n", "<C-c>", function()
-    -- Clear all content
-    vim.api.nvim_buf_set_lines(state.editor_buf, 0, -1, false, { "" })
-  end, opts)
-  vim.keymap.set("n", "d", function()
-    local url = "https://mojir.github.io/lits/"
-    vim.fn.system("open " .. vim.fn.shellescape(url))
-    print("Opened Lits documentation in browser")
-  end, opts)
+  vim.keymap.set("n", "?", show_help, opts)
   -- Close window when clicking outside
   vim.api.nvim_create_autocmd("WinLeave", {
+    group = state.autocmd_group,
     buffer = state.editor_buf,
-    once = true,
-    callback = function()
-      vim.defer_fn(function()
-        -- Only close if the editor window still exists and we're not in result popup
-        if state.editor_win and vim.api.nvim_win_is_valid(state.editor_win) and not state.result_win then
-          close_editor()
-
-          vim.cmd("stopinsert")
-        end
-      end, 50)
-    end,
+    callback = should_close_editor,
   })
-  -- Help binding
-  vim.keymap.set("n", "?", function()
-    local help_lines = {
-      "Lits Editor Help:",
-      "",
-      "<C-e>     - Evaluate and preview result",
-      "<C-Enter> - Evaluate and insert result directly",
-      "<C-c>     - Clear editor content",
-      "d         - Open Lits documentation",
-      "q         - Close editor",
-      "?         - Show this help",
-      "",
-      "In result popup:",
-      "i/<Enter> - Insert result at cursor",
-      "y         - Copy result to clipboard",
-      "q         - Cancel and return to editor",
-    }
-    print(table.concat(help_lines, "\n"))
-  end, opts)
-
+  vim.api.nvim_create_autocmd("WinLeave", {
+    group = state.autocmd_group,
+    buffer = state.result_buf,
+    callback = should_close_editor,
+  })
   -- Enter insert mode
   vim.cmd("startinsert")
 end
@@ -548,10 +582,6 @@ function M.setup(opts)
     range = true,
     desc = "Open Lits program editor",
   })
-
-  -- Optional: Add keymaps for quick access
-  vim.keymap.set("n", "<leader>L", ":Lits<CR>", { desc = "Open Lits editor" })
-  vim.keymap.set("v", "<leader>L", ":Lits<CR>", { desc = "Open Lits editor with selection" })
 end
 
 return M
