@@ -61,7 +61,7 @@ local function show_help()
     "",
     "In result popup:",
     "  i/<Enter> - Insert result at cursor",
-    "  y         - Copy result to clipboard", 
+    "  y         - Copy result to clipboard",
     "  q         - Cancel and return to editor",
   }
   print(table.concat(help_lines, "\n"))
@@ -78,6 +78,31 @@ local function should_close_editor()
       end
     end
   end, 100)
+end
+
+local function open_content_in_new_buffer()
+  local current_state = state.get()
+  local editor_buf = current_state.editor_buf
+
+  if not (editor_buf and vim.api.nvim_buf_is_valid(editor_buf)) then
+    return
+  end
+
+  local lines = vim.api.nvim_buf_get_lines(editor_buf, 0, -1, false)
+  local content = table.concat(lines, "\n")
+
+  -- Close editor and return to original window
+  ui.close_editor()
+  if current_state.original_win and vim.api.nvim_win_is_valid(current_state.original_win) then
+    vim.api.nvim_set_current_win(current_state.original_win)
+  end
+
+  -- Create new buffer with lits content
+  vim.cmd("enew")
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, vim.split(content, "\n"))
+  vim.bo.filetype = "lisp"
+
+  print("Lits content opened in new buffer")
 end
 
 function M.evaluate_and_show()
@@ -107,7 +132,7 @@ local function create_program_window(content)
   -- Create buffer
   local editor_buf = vim.api.nvim_create_buf(false, true)
   state.set("editor_buf", editor_buf)
-  
+
   local lines = vim.split(content, "\n")
   vim.api.nvim_buf_set_lines(editor_buf, 0, -1, false, lines)
   vim.bo[editor_buf].filetype = "lisp" -- Close enough for basic syntax highlighting
@@ -130,46 +155,25 @@ local function create_program_window(content)
   vim.wo[editor_win].number = true
 
   -- Set up keymaps
-  local opts = { buffer = editor_buf, noremap = true, silent = true }
+  local opts = { buffer = editor_buf, noremap = true, silent = true, nowait = true }
 
   -- Evaluation
-  vim.keymap.set("n", "<C-CR>", M.evaluate_and_insert, opts)
-  vim.keymap.set("i", "<C-CR>", M.evaluate_and_insert, opts)
-  vim.keymap.set("n", "<C-e>", M.evaluate_and_show, opts)
-  vim.keymap.set("i", "<C-e>", M.evaluate_and_show, opts)
-  
+  vim.keymap.set("n", "<leader><CR>", M.evaluate_and_insert, opts)
+  vim.keymap.set("n", "<leader>e", M.evaluate_and_show, opts)
+
   -- File operations
   vim.keymap.set("n", "<leader>s", files.save_as_dialog, opts)
-  vim.keymap.set("i", "<leader>s", function()
-    vim.cmd("stopinsert")
-    files.save_as_dialog()
-  end, opts)
   vim.keymap.set("n", "<leader>o", files.open_file_picker, opts)
-  vim.keymap.set("i", "<leader>o", function()
-    vim.cmd("stopinsert")
-    files.open_file_picker()
-  end, opts)
   vim.keymap.set("n", "<leader>n", files.new_file_dialog, opts)
-  vim.keymap.set("i", "<leader>n", function()
-    vim.cmd("stopinsert")
-    files.new_file_dialog()
-  end, opts)
   vim.keymap.set("n", "<leader>d", files.delete_current_file, opts)
-  vim.keymap.set("i", "<leader>d", function()
-    vim.cmd("stopinsert")
-    files.delete_current_file()
-  end, opts)
-  
+
+  -- Open content in new buffer
+  vim.keymap.set("n", "<leader>b", open_content_in_new_buffer, opts)
+
   -- Other operations
-  vim.keymap.set("i", "<C-l>", open_lits_playground, opts)
-  vim.keymap.set("n", "<C-l>", open_lits_playground, opts)
-  vim.keymap.set("n", "q", ui.close_editor, opts)
-  vim.keymap.set("n", "<C-q>", ui.close_editor, opts)
-  vim.keymap.set("i", "<C-q>", function()
-    vim.cmd("stopinsert")
-    ui.close_editor()
-  end, opts)
-  vim.keymap.set("n", "?", show_help, opts)
+  vim.keymap.set("n", "<leader>l", open_lits_playground, opts)
+  vim.keymap.set("n", "<Esc>", ui.close_editor, opts)
+  vim.keymap.set("n", "<leader>?", show_help, opts)
 
   -- Close window when clicking outside
   vim.api.nvim_create_autocmd("WinLeave", {
@@ -203,16 +207,12 @@ function M.open(use_selection)
       return
     end
 
-    -- Determine which file to work with
-    local target_file = files.get_starting_file()
+    -- Always use default file for selections
+    local target_file = config.get().default_file
     local existing_content = utils.load_program(target_file)
 
     if existing_content ~= "" then
-      local choice = vim.fn.confirm(
-        string.format("Replace existing %s content?", target_file), 
-        "&Yes\n&No", 
-        2
-      )
+      local choice = vim.fn.confirm(string.format("Replace existing %s content?", target_file), "&Yes\n&No", 2)
 
       if choice == 1 then
         content = selection
@@ -222,7 +222,7 @@ function M.open(use_selection)
     else
       content = selection
     end
-    
+
     -- Update current file
     state.set("current_file", target_file)
   else
@@ -235,5 +235,4 @@ function M.open(use_selection)
   state.set("current_program", content)
   create_program_window(content)
 end
-
 return M

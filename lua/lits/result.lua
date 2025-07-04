@@ -54,17 +54,11 @@ function M.create_popup(result_text, show_insert_option)
 
   -- QUIT/CANCEL options - return to editor
   vim.keymap.set("n", "q", ui.close_result_popup, opts)
+  vim.keymap.set("n", "<Esc>", ui.close_result_popup, opts)
 
   if show_insert_option then
     -- INSERT option - insert result at original position
     vim.keymap.set("n", "i", function()
-      ui.close_result_popup()
-      ui.close_editor_and_return_to_original()
-      vim.api.nvim_put({ state.get().last_result }, "c", true, true)
-    end, opts)
-
-    -- Enter key also inserts
-    vim.keymap.set("n", "<CR>", function()
       ui.close_result_popup()
       ui.close_editor_and_return_to_original()
       vim.api.nvim_put({ state.get().last_result }, "c", true, true)
