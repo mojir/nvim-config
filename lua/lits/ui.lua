@@ -8,6 +8,9 @@ local M = {}
 function M.cleanup_state()
   local current_state = state.get()
   
+  -- Save session data before cleaning up
+  state.save_session_data()
+  
   -- Clear autocmds
   if current_state.autocmd_group then
     pcall(vim.api.nvim_del_augroup_by_id, current_state.autocmd_group)
@@ -29,7 +32,7 @@ function M.cleanup_state()
     pcall(vim.api.nvim_buf_delete, current_state.editor_buf, { force = true })
   end
 
-  -- Reset state
+  -- Reset state (but preserve file information)
   state.reset()
 end
 
@@ -74,6 +77,9 @@ function M.close_editor()
     pcall(vim.api.nvim_buf_delete, current_state.editor_buf, { force = true })
     state.set("editor_buf", nil)
   end
+  
+  -- Save session data when closing editor
+  state.save_session_data()
 end
 
 function M.close_editor_and_return_to_original()

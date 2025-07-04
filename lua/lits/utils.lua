@@ -59,6 +59,20 @@ function M.save_program(content, filename)
   return true
 end
 
+function M.delete_program(filename)
+  local filepath = M.get_program_path(filename)
+  if vim.fn.filereadable(filepath) == 1 then
+    local ok = pcall(vim.fn.delete, filepath)
+    return ok
+  end
+  return false
+end
+
+function M.file_exists(filename)
+  local filepath = M.get_program_path(filename)
+  return vim.fn.filereadable(filepath) == 1
+end
+
 function M.get_visual_selection()
   local mode = vim.fn.visualmode()
   local start_pos = vim.fn.getpos("'<")

@@ -6,6 +6,7 @@ local state = {
   current_program = "",
   last_result = "",
   current_file = "",
+  last_explicit_file = nil, -- Track explicitly saved files for reopening
   editor_buf = nil,
   editor_win = nil,
   result_buf = nil,
@@ -33,6 +34,8 @@ function M.reset()
   state.result_win = nil
   state.original_cursor_pos = nil
   state.original_win = nil
+  -- Note: Don't reset current_file and last_explicit_file on editor close
+  -- They should persist between sessions
 end
 
 function M.is_initialized()
@@ -49,6 +52,40 @@ end
 
 function M.set_autocmd_group(group)
   state.autocmd_group = group
+end
+
+-- Persistence functions for session data
+function M.save_session_data()
+  local session_file = vim.fn.stdpath("data") .. "/lits-session.json"
+  local session_data = {
+    current_file = state.current_file,
+    last_explicit_file = state.last_explicit_file,
+  }
+  
+  local ok, encoded = pcall(vim.fn.json_encode, session_data)
+  if ok then
+    local file = io.open(session_file, "w")
+    if file then
+      file:write(encoded)
+      file:close()
+    end
+  end
+end
+
+function M.load_session_data()
+  local session_file = vim.fn.stdpath("data") .. "/lits-session.json"
+  local file = io.open(session_file, "r")
+  
+  if file then
+    local content = file:read("*a")
+    file:close()
+    
+    local ok, session_data = pcall(vim.fn.json_decode, content)
+    if ok and session_data then
+      state.current_file = session_data.current_file or ""
+      state.last_explicit_file = session_data.last_explicit_file
+    end
+  end
 end
 
 return M

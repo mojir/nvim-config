@@ -6,10 +6,10 @@ local config = require("lits.config")
 local state = require("lits.state")
 local utils = require("lits.utils")
 local ui = require("lits.ui")
+local files = require("lits.files")
 
--- Import functionality modules (to be created)
+-- Import functionality modules
 local editor = require("lits.editor")
-local result = require("lits.result")
 local commands = require("lits.commands")
 
 function M.setup(opts)
@@ -18,17 +18,21 @@ function M.setup(opts)
   -- Setup configuration
   config.setup(opts)
   
-  -- Set initial state
-  state.set("current_file", config.get().default_file)
+  -- Load session data to restore file state
+  state.load_session_data()
+  
+  -- Determine starting file
+  local starting_file = files.get_starting_file()
+  state.set("current_file", starting_file)
 
   -- Create main autocmd group
   local autocmd_group = vim.api.nvim_create_augroup("LitsPlugin", { clear = true })
   state.set_autocmd_group(autocmd_group)
 
-  -- Initialize directory and load default program
+  -- Initialize directory and load appropriate program
   vim.defer_fn(function()
     if utils.ensure_programs_dir() then
-      local program_content = utils.load_program(state.get().current_file)
+      local program_content = utils.load_program(starting_file)
       state.set("current_program", program_content)
       state.set_initialized(true)
     else
@@ -36,10 +40,13 @@ function M.setup(opts)
     end
   end, 10)
 
-  -- Setup cleanup on exit
+  -- Setup cleanup and session saving on exit
   vim.api.nvim_create_autocmd("VimLeavePre", {
     group = autocmd_group,
-    callback = ui.cleanup_state,
+    callback = function()
+      state.save_session_data()
+      ui.cleanup_state()
+    end,
   })
 
   -- Setup commands
@@ -57,6 +64,27 @@ end
 
 function M.evaluate_and_insert()
   return editor.evaluate_and_insert()
+end
+
+-- Additional API functions for file management
+function M.save_as()
+  return files.save_as_dialog()
+end
+
+function M.open_file()
+  return files.open_file_picker()
+end
+
+function M.new_file()
+  return files.new_file_dialog()
+end
+
+function M.delete_file()
+  return files.delete_current_file()
+end
+
+function M.list_files()
+  return files.list_files()
 end
 
 return M

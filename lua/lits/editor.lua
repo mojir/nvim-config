@@ -3,7 +3,7 @@ local config = require("lits.config")
 local state = require("lits.state")
 local utils = require("lits.utils")
 local ui = require("lits.ui")
-local result = require("lits.result")
+local files = require("lits.files")
 
 local M = {}
 
@@ -42,17 +42,27 @@ local function show_help()
   local help_lines = {
     "Lits Editor Help:",
     "",
-    "<C-Enter> - Evaluate and insert result directly",
-    "<C-e>     - Evaluate and preview result",
-    "<C-q> / q - Close editor",
-    "<C-l>     - Open Lits Playground with current code",
-    "<C-s>     - Save current program",
-    "?         - Show this help",
+    "Evaluation:",
+    "  <C-Enter> - Evaluate and insert result directly",
+    "  <C-e>     - Evaluate and preview result",
+    "",
+    "File Operations:",
+    "  <leader>s - Save As (prompts for filename)",
+    "  <leader>o - Open file (Telescope picker)",
+    "  <leader>n - New file",
+    "  <leader>d - Delete current file",
+    "",
+    "Other:",
+    "  <C-l>     - Open Lits Playground with current code",
+    "  <C-q> / q - Close editor",
+    "  ?         - Show this help",
+    "",
+    "Note: Files auto-save when closing editor",
     "",
     "In result popup:",
-    "i/<Enter> - Insert result at cursor",
-    "y         - Copy result to clipboard",
-    "q         - Cancel and return to editor",
+    "  i/<Enter> - Insert result at cursor",
+    "  y         - Copy result to clipboard", 
+    "  q         - Cancel and return to editor",
   }
   print(table.concat(help_lines, "\n"))
 end
@@ -73,9 +83,9 @@ end
 function M.evaluate_and_show()
   local success, result_text = utils.evaluate_lits()
   if success then
-    result.create_popup(result_text, true)
+    require("lits.result").create_popup(result_text, true)
   else
-    result.create_popup(result_text, false)
+    require("lits.result").create_popup(result_text, false)
   end
 end
 
@@ -85,27 +95,8 @@ function M.evaluate_and_insert()
     ui.close_editor_and_return_to_original()
     vim.api.nvim_put({ result_text }, "c", true, true)
   else
-    result.create_popup(result_text, false)
+    require("lits.result").create_popup(result_text, false)
   end
-end
-
-function M.save_current_program()
-  local current_state = state.get()
-  if current_state.editor_buf and vim.api.nvim_buf_is_valid(current_state.editor_buf) then
-    local lines = vim.api.nvim_buf_get_lines(current_state.editor_buf, 0, -1, false)
-    local content = table.concat(lines, "\n")
-    
-    if utils.save_program(content, current_state.current_file) then
-      state.set("current_program", content)
-      print("Program saved: " .. current_state.current_file)
-      return true
-    else
-      print("Failed to save program")
-      return false
-    end
-  end
-  print("No program to save")
-  return false
 end
 
 local function create_program_window(content)
@@ -141,14 +132,37 @@ local function create_program_window(content)
   -- Set up keymaps
   local opts = { buffer = editor_buf, noremap = true, silent = true }
 
+  -- Evaluation
   vim.keymap.set("n", "<C-CR>", M.evaluate_and_insert, opts)
   vim.keymap.set("i", "<C-CR>", M.evaluate_and_insert, opts)
   vim.keymap.set("n", "<C-e>", M.evaluate_and_show, opts)
   vim.keymap.set("i", "<C-e>", M.evaluate_and_show, opts)
+  
+  -- File operations
+  vim.keymap.set("n", "<leader>s", files.save_as_dialog, opts)
+  vim.keymap.set("i", "<leader>s", function()
+    vim.cmd("stopinsert")
+    files.save_as_dialog()
+  end, opts)
+  vim.keymap.set("n", "<leader>o", files.open_file_picker, opts)
+  vim.keymap.set("i", "<leader>o", function()
+    vim.cmd("stopinsert")
+    files.open_file_picker()
+  end, opts)
+  vim.keymap.set("n", "<leader>n", files.new_file_dialog, opts)
+  vim.keymap.set("i", "<leader>n", function()
+    vim.cmd("stopinsert")
+    files.new_file_dialog()
+  end, opts)
+  vim.keymap.set("n", "<leader>d", files.delete_current_file, opts)
+  vim.keymap.set("i", "<leader>d", function()
+    vim.cmd("stopinsert")
+    files.delete_current_file()
+  end, opts)
+  
+  -- Other operations
   vim.keymap.set("i", "<C-l>", open_lits_playground, opts)
   vim.keymap.set("n", "<C-l>", open_lits_playground, opts)
-  vim.keymap.set("n", "<C-s>", M.save_current_program, opts)
-  vim.keymap.set("i", "<C-s>", M.save_current_program, opts)
   vim.keymap.set("n", "q", ui.close_editor, opts)
   vim.keymap.set("n", "<C-q>", ui.close_editor, opts)
   vim.keymap.set("i", "<C-q>", function()
@@ -189,10 +203,16 @@ function M.open(use_selection)
       return
     end
 
-    local existing_content = utils.load_program(current_state.current_file)
+    -- Determine which file to work with
+    local target_file = files.get_starting_file()
+    local existing_content = utils.load_program(target_file)
 
     if existing_content ~= "" then
-      local choice = vim.fn.confirm(string.format("Replace existing %s content?", current_state.current_file), "&Yes\n&No", 2)
+      local choice = vim.fn.confirm(
+        string.format("Replace existing %s content?", target_file), 
+        "&Yes\n&No", 
+        2
+      )
 
       if choice == 1 then
         content = selection
@@ -202,8 +222,14 @@ function M.open(use_selection)
     else
       content = selection
     end
+    
+    -- Update current file
+    state.set("current_file", target_file)
   else
-    content = utils.load_program(current_state.current_file)
+    -- Load the appropriate starting file
+    local starting_file = files.get_starting_file()
+    content = utils.load_program(starting_file)
+    state.set("current_file", starting_file)
   end
 
   state.set("current_program", content)
