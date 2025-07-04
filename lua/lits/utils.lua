@@ -1,4 +1,3 @@
--- lua/lits/utils.lua
 local config = require("lits.config")
 local state = require("lits.state")
 
@@ -218,15 +217,37 @@ function M.ensure_directory_for_file(filepath)
 end
 
 function M.cleanup_empty_directories(filepath)
-  local programs_dir = config.get().programs_dir
+  local programs_dir = vim.fn.resolve(config.get().programs_dir)
   local dir = vim.fn.fnamemodify(filepath, ":h")
   
-  -- Don't remove the root programs directory
-  while dir ~= programs_dir and dir ~= vim.fn.fnamemodify(dir, ":h") do
+  -- Normalize paths for comparison
+  programs_dir = vim.fn.fnamemodify(programs_dir, ":p"):gsub("/$", "")
+  
+  while true do
+    -- Normalize current directory path
+    local normalized_dir = vim.fn.fnamemodify(dir, ":p"):gsub("/$", "")
+    
+    -- Stop if we've reached the programs directory
+    if normalized_dir == programs_dir then
+      break
+    end
+    
     -- Check if directory is empty
     local files = vim.fn.glob(dir .. "/*", false, true)
-    if #files == 0 then
-      pcall(vim.fn.delete, dir, "d")
+    local hidden_files = vim.fn.glob(dir .. "/.*", false, true)
+    
+    -- Filter out . and .. from hidden files
+    hidden_files = vim.tbl_filter(function(f)
+      local basename = vim.fn.fnamemodify(f, ":t")
+      return basename ~= "." and basename ~= ".."
+    end, hidden_files)
+    
+    if #files == 0 and #hidden_files == 0 then
+      local success = pcall(vim.fn.delete, dir, "d")
+      if not success then
+        break -- Can't delete, stop trying
+      end
+      -- Move to parent directory
       dir = vim.fn.fnamemodify(dir, ":h")
     else
       break -- Directory not empty, stop

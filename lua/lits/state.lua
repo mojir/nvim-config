@@ -1,4 +1,3 @@
--- lua/lits/state.lua
 local M = {}
 
 -- State management

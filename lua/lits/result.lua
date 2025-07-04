@@ -1,4 +1,3 @@
--- lua/lits/result.lua
 local config = require("lits.config")
 local state = require("lits.state")
 local utils = require("lits.utils")

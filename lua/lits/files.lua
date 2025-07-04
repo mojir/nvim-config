@@ -1,4 +1,3 @@
--- lua/lits/files.lua
 local config = require("lits.config")
 local state = require("lits.state")
 local utils = require("lits.utils")
@@ -34,13 +33,9 @@ function M.list_files()
   
   return files
 end
+
 function M.delete_program(filename)
-  local filepath = utils.get_program_path(filename)
-  if vim.fn.filereadable(filepath) == 1 then
-    local ok = pcall(vim.fn.delete, filepath)
-    return ok
-  end
-  return false
+  return utils.delete_program(filename)
 end
 
 function M.get_starting_file()
@@ -83,9 +78,9 @@ function M.process_save_as(filename, current_name, current_state)
     filename = filename .. ".lits"
   end
   
-  -- Validate filename
+  -- Validate filename  
   if filename == config.get().default_file then
-    print("Cannot save as " .. config.get().default_file .. " (reserved for scratch)")
+    print("Cannot save as SCRATCH.lits (reserved for scratch space)")
     return false
   end
   
@@ -478,15 +473,15 @@ function M.copy_current_file_path()
   local current_state = state.get()
   local current_file = current_state.current_file
   
-  if current_file == config.get().default_file then
-    print("Cannot copy path for scratch file (not saved)")
-    return
-  end
-  
   local filepath = utils.get_program_path(current_file)
   vim.fn.setreg('"', filepath)
   vim.fn.setreg('+', filepath)
-  print("Copied path: " .. filepath)
+  
+  if current_file == config.get().default_file then
+    print("Copied scratch file path: " .. filepath)
+  else
+    print("Copied path: " .. filepath)
+  end
 end
 
 return M

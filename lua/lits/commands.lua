@@ -1,4 +1,3 @@
--- lua/lits/commands.lua
 local M = {}
 
 local function open_lits_editor(use_selection)

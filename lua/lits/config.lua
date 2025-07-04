@@ -1,10 +1,9 @@
--- lua/lits/config.lua
 local M = {}
 
 -- Default configuration
 M.default_config = {
-  programs_dir = vim.fn.stdpath("data") .. "/lits-programs/",
-  default_file = "DEFAULT.lits",
+  programs_dir = vim.fn.stdpath("config") .. "/data/lits-programs/",
+  default_file = "SCRATCH.lits",
   popup = {
     min_width = 60,
     min_height = 15,

@@ -1,4 +1,3 @@
--- lua/lits/init.lua
 local M = {}
 
 -- Import modules
