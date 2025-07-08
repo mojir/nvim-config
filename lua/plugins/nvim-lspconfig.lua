@@ -26,7 +26,7 @@ return {
 
       require("mason-lspconfig").setup({
         ensure_installed = {
-          "ts_ls",
+          -- 'ts_ls',
           "bashls",
           "cssls",
           "emmet_ls",
@@ -111,7 +111,7 @@ return {
           })
         else
           -- local servers = { 'pyright', 'bashls', 'html', 'cssls', 'emmet_ls', 'ts_ls' }
-          local servers = { "pyright", "bashls", "html", "cssls", "emmet_ls", "jsonls", "volar", "ts_ls" }
+          local servers = { "pyright", "bashls", "html", "cssls", "emmet_ls", "jsonls", "volar" }
           for _, server in ipairs(servers) do
             if server == "emmet_ls" then
               lspconfig[server].setup({
@@ -134,51 +134,6 @@ return {
             end
           end
         end
-
-        -- ts_ls specifically for symbols only
-        lspconfig.ts_ls.setup({
-          capabilities = capabilities,
-          -- Disable everything except symbols to avoid conflicts with typescript-tools
-          handlers = {
-            -- Disable these to let typescript-tools handle them
-            ["textDocument/hover"] = function()
-              return nil
-            end,
-            ["textDocument/completion"] = function()
-              return nil
-            end,
-            ["textDocument/signatureHelp"] = function()
-              return nil
-            end,
-            ["textDocument/publishDiagnostics"] = function()
-              return nil
-            end,
-            ["textDocument/codeAction"] = function()
-              return nil
-            end,
-            ["textDocument/rename"] = function()
-              return nil
-            end,
-            ["textDocument/definition"] = function()
-              return nil
-            end,
-            ["textDocument/references"] = function()
-              return nil
-            end,
-          },
-          init_options = {
-            preferences = {
-              disableSuggestions = true,
-            },
-          },
-          settings = {
-            typescript = {
-              preferences = {
-                disableSuggestions = true,
-              },
-            },
-          },
-        })
       end, 100)
 
       -- LSP key mappings
@@ -211,11 +166,11 @@ return {
 
           -- Actions
           lsp_map("n", "<leader>lr", vim.lsp.buf.rename, "LSP Rename")
-          lsp_map("n", "<leader>lu", "<cmd>TSToolsRemoveUnused<cr>", "Remove unused imports")
+          lsp_map("n", "<leader>lu", "<cmd>TSToolsRemoveUnused<cr>", "Remove unused imports") 
           lsp_map("n", "<leader>li", "<cmd>TSToolsAddMissingImports<cr>", "Add missing imports")
           lsp_map({ "n", "v" }, "<leader>la", vim.lsp.buf.code_action, "LSP Code Action")
           lsp_map("n", "<leader>le", vim.diagnostic.open_float, "LSP Error details")
-          lsp_map("n", "<leader>lI", "<cmd>LspInfo<cr>", "LSP Info")
+          lsp_map("n", "<leader>li", "<cmd>LspInfo<cr>", "LSP Info")
           lsp_map("n", "<leader>lR", "<cmd>LspRestart<cr>", "LSP Restart")
 
           -- Diagnostics
