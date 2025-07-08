@@ -5,15 +5,21 @@ return {
     ft = { "javascript", "typescript", "javascriptreact", "typescriptreact" },
     config = function()
       require("typescript-tools").setup({
+        capabilities = vim.tbl_deep_extend("force", 
+          require("cmp_nvim_lsp").default_capabilities(),
+          {
+            -- Explicitly enable symbol providers
+            documentSymbolProvider = true,
+            workspaceSymbolProvider = true,
+          }
+        ),
         settings = {
           separate_diagnostic_server = true,
           publish_diagnostic_on = "insert_leave",
-          expose_as_code_action = {},
-          tsserver_path = nil,
-          tsserver_plugins = {},
-          tsserver_max_memory = "auto",
-          tsserver_format_options = {},
-          tsserver_file_preferences = {},
+          tsserver_file_preferences = {
+            includeCompletionsForModuleExports = true,
+            includeCompletionsWithInsertText = true,
+          },
         },
       })
     end,

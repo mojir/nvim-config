@@ -55,7 +55,7 @@ local function show_help()
     "Other:",
     "  <leader>b - Open content in new buffer",
     "  <leader>l - Open Lits Playground with current code",
-    "  <Esc>     - Close editor",
+    "  <leader>q - Close editor",
     "  <leader>? - Show this help",
     "",
     "Note: Files auto-save when closing editor",
@@ -174,7 +174,7 @@ local function create_program_window(content)
 
   -- Other operations
   vim.keymap.set("n", "<leader>l", open_lits_playground, opts)
-  vim.keymap.set("n", "<Esc>", ui.close_editor, opts)
+  vim.keymap.set("n", "<leader>q", ui.close_editor, opts)
   vim.keymap.set("n", "<leader>?", show_help, opts)
 
   -- Close window when clicking outside

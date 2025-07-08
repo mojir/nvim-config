@@ -39,8 +39,23 @@ return {
         if escape == true then
           return first_line:gsub("[%(%)%[%]%{%}%.%*%+%?%^%$%|\\]", "\\%1")
         end
-          return first_line
+        return first_line
       end
+
+      local function show_buffers(builtin)
+        builtin.buffers({
+          attach_mappings = function(prompt_bufnr, map)
+            map("i", "<C-d>", function()
+              require("telescope.actions").delete_buffer(prompt_bufnr)
+            end)
+            map("n", "<C-d>", function()
+              require("telescope.actions").delete_buffer(prompt_bufnr)
+            end)
+            return true
+          end,
+        })
+      end
+
       telescope.setup({
         defaults = {
           file_ignore_patterns = {
@@ -160,7 +175,9 @@ return {
       vim.keymap.set("n", "<leader><leader>m", "<cmd>Telescope marks<cr>", { desc = "Show marks" })
       vim.keymap.set("n", "<leader><leader>re", "<cmd>Telescope registers<cr>", { desc = "Show registers" })
 
-      vim.keymap.set("n", "<leader><leader>b", builtin.buffers, { desc = "Telescope buffers" })
+      vim.keymap.set("n", "<leader><leader>b", function()
+        show_buffers(builtin)
+      end, { desc = "Telescope buffers" })
       vim.keymap.set("n", "<leader><leader>co", builtin.commands, { desc = "Telescope commands" })
       vim.keymap.set("n", "<leader><leader>h", builtin.help_tags, { desc = "Telescope help tags" })
 
