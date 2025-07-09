@@ -4,25 +4,6 @@ local tracking = require("session.tracking")
 
 local M = {}
 
--- Helper function to format session name back to readable path
-local function format_session_name(session_name)
-  -- Convert underscores back to path separators
-  local path = session_name:gsub("_", "/")
-  
-  -- Add leading slash if it doesn't start with one
-  if not path:match("^/") then
-    path = "/" .. path
-  end
-  
-  -- Replace home directory with ~
-  local home = vim.fn.expand("~")
-  if path:sub(1, #home) == home then
-    path = "~" .. path:sub(#home + 1)
-  end
-  
-  return path
-end
-
 -- Helper function to get the timestamp of a session
 local function get_session_timestamp(session_dir)
   local vim_file = session_dir .. "session.vim"
@@ -34,16 +15,6 @@ local function get_session_timestamp(session_dir)
   -- Use the newest file timestamp, fallback to 0 if neither exists
   local timestamp = math.max(vim_time or 0, json_time or 0)
   return timestamp
-end
-
--- Helper function to format timestamp as ISO date
-local function format_timestamp(timestamp)
-  if timestamp == 0 then
-    return "unknown"
-  end
-  
-  -- Format as ISO date (YYYY-MM-DD HH:MM)
-  return os.date("%Y-%m-%d %H:%M", timestamp)
 end
 
 -- Clear all global marks (used when switching sessions)
@@ -88,7 +59,6 @@ end
 
 local function load_session()
   local session_file = config.get_session_file()
-  local data_file = config.get_data_file()
   
   if vim.fn.filereadable(session_file) == 1 then
     -- Load existing session
@@ -173,50 +143,41 @@ function M.get_sorted_sessions_with_display()
   for _, session_dir in ipairs(session_dirs) do
     local name = vim.fn.fnamemodify(session_dir, ":h:t")
     local timestamp = get_session_timestamp(session_dir)
-    table.insert(sessions_with_time, { name = name, timestamp = timestamp, dir = session_dir })
+    table.insert(sessions_with_time, { 
+      name = name, 
+      timestamp = timestamp, 
+      dir = session_dir 
+    })
   end
   
   table.sort(sessions_with_time, function(a, b)
-    return a.timestamp > b.timestamp
+    local current_session = config.get_session_name()
+    
+    -- Current session always comes first (appears at bottom in telescope)
+    if a.name == current_session then
+      return true
+    elseif b.name == current_session then
+      return false
+    else
+      -- For non-current sessions, sort by timestamp (newest first)
+      return a.timestamp > b.timestamp
+    end
   end)
   
-  -- Format for display
+  -- Return raw session data - let picker handle formatting
   local session_items = {}
+  local current_session = config.get_session_name()
+  
   for _, session in ipairs(sessions_with_time) do
-    local timestamp_str = format_timestamp(session.timestamp)
-    local formatted_name = format_session_name(session.name)
-    
-    -- Add marker for current session
-    local current_session = config.get_session_name()
-    local marker = (session.name == current_session) and "* " or "  "
-    
     table.insert(session_items, {
-      name = session.name,  -- Keep original name for switching
-      display = marker .. formatted_name .. " (" .. timestamp_str .. ")",
+      name = session.name,
       dir = session.dir,
+      timestamp = session.timestamp,
+      is_current = (session.name == current_session),
     })
   end
   
   return session_items
-end
-
-function M.list_sessions()
-  local session_items = M.get_sorted_sessions_with_display()
-  if #session_items == 0 then
-    print("No sessions found")
-    return {}
-  end
-  
-  print("Available sessions (sorted by last used):")
-  for _, session in ipairs(session_items) do
-    print("  " .. session.display)
-  end
-  
-  local result = {}
-  for _, session in ipairs(session_items) do
-    table.insert(result, session.name)
-  end
-  return result
 end
 
 -- Public API - only functions that should be called from outside
