@@ -38,12 +38,34 @@ return {
               end
 
               require("telescope.builtin").live_grep({
-                cwd = path,
-
+                search_dirs = { path },
                 additional_args = function()
                   return ripgrep_config.default_args
                 end,
                 prompt_title = "Live grep in " .. vim.fn.fnamemodify(path, ":t"),
+                attach_mappings = function(prompt_bufnr, map)
+                  require("telescope.actions").select_default:replace(function()
+                    local selection = require("telescope.actions.state").get_selected_entry()
+                    require("telescope.actions").close(prompt_bufnr)
+
+                    if selection and selection.filename then
+                      -- Close nvim-tree to avoid interference
+                      if pcall(require, "nvim-tree.api") then
+                        require("nvim-tree.api").tree.close()
+                      end
+
+                      vim.schedule(function()
+                        vim.cmd("edit " .. vim.fn.fnameescape(selection.filename))
+                        vim.cmd("normal! " .. selection.lnum .. "G")
+                        if selection.col and selection.col > 0 then
+                          vim.cmd("normal! " .. (selection.col - 1) .. "l")
+                        end
+                        vim.cmd("normal! zz")
+                      end)
+                    end
+                  end)
+                  return true
+                end,
               })
             end
           end, { buffer = bufnr, desc = "Live grep in selected folder" })

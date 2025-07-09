@@ -104,6 +104,14 @@ return {
         mouse = false, -- disable mouse support
       })
 
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "TelescopePreviewerLoaded",
+        callback = function()
+          vim.wo.number = true
+          vim.wo.relativenumber = false
+        end,
+      })
+
       telescope.load_extension("live_grep_args")
       local builtin = require("telescope.builtin")
       vim.keymap.set("n", "<C-f>", builtin.find_files, { desc = "Telescope find files" })
