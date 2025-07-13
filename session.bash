@@ -15,132 +15,180 @@ NC='\033[0m' # No Color
 SESSIONS_DIR="$HOME/.local/share/nvim/sessions"
 
 # Function to check if a PID is running
-_nvim_session_is_process_running() {
+_session_nvim_is_process_running() {
     local pid=$1
-    
-    if [ -z "$pid" ] || ! [[ "$pid" =~ ^[0-9]+$ ]]; then
-        return 1  # Invalid PID
-    fi
-    
-    if kill -0 "$pid" 2>/dev/null; then
-        return 0  # Process is running
-    else
-        return 1  # Process is not running
-    fi
+    [ -n "$pid" ] && [[ "$pid" =~ ^[0-9]+$ ]] && kill -0 "$pid" 2>/dev/null
 }
 
 # Function to convert session name back to path
-_nvim_session_name_to_path() {
-    local session_name=$1
-    local path="${session_name//_//}"
-    
-    # Remove leading slash if present (from leading underscore)
-    if [[ "$path" =~ ^/ ]]; then
-        path="${path#/}"
-    fi
-    
-    # Add leading slash
+_session_nvim_name_to_path() {
+    local path="${1//_//}"
+    [[ "$path" =~ ^/ ]] && path="${path#/}"
     path="/$path"
-    
-    # Replace home directory with ~
     if [[ "$path" == "$HOME"* ]]; then
-        if [[ "$path" == "$HOME" ]]; then
-            path="~"
-        else
-            path="~${path#$HOME}"
-        fi
+        [ "$path" = "$HOME" ] && path="~" || path="~${path#$HOME}"
     fi
-    
     echo "$path"
 }
 
-# Function to list sessions with interactive menu
+# Function to get lock status and info
+_session_nvim_get_lock_status() {
+    local session_dir="$1"
+    local lock_file="$session_dir/.session.lock"
+    
+    if [ ! -f "$lock_file" ]; then
+        echo "CLOSED:$NC"
+        return
+    fi
+    
+    local lock_pid=$(head -n1 "$lock_file" 2>/dev/null | tr -d '[:space:]')
+    if [ -n "$lock_pid" ] && _session_nvim_is_process_running "$lock_pid"; then
+        echo "ACTIVE:$GREEN"
+    else
+        echo "STALE:$YELLOW"
+    fi
+}
+
+# Function to collect all sessions with their info
+_session_nvim_collect_sessions() {
+    local -n sessions_ref=$1
+    local -n counts_ref=$2
+    
+    sessions_ref=()
+    counts_ref=(0 0 0 0)  # [total, active, stale, closed]
+    
+    [ ! -d "$SESSIONS_DIR" ] && return
+    
+    for session_dir in "$SESSIONS_DIR"/*/; do
+        [ ! -d "$session_dir" ] && continue
+        
+        local session_name=$(basename "$session_dir")
+        local session_path=$(_session_nvim_name_to_path "$session_name")
+        local status_info=$(_session_nvim_get_lock_status "$session_dir")
+        local status="${status_info%:*}"
+        local color="${status_info#*:}"
+        
+        sessions_ref+=("$session_path:$status:$color:$session_dir")
+        
+        ((counts_ref[0]++))
+        case "$status" in
+            "ACTIVE") ((counts_ref[1]++)) ;;
+            "STALE")  ((counts_ref[2]++)) ;;
+            "CLOSED") ((counts_ref[3]++)) ;;
+        esac
+    done
+}
+
+# Function to display sessions with numbers
+_session_nvim_display_sessions() {
+    local sessions=("$@")
+    
+    printf "%-4s %-50s %-10s\n" "NUM" "PATH" "STATUS"
+    printf "%-4s %-50s %-10s\n" "---" "----" "------"
+    
+    local num=1
+    for session_info in "${sessions[@]}"; do
+        IFS=':' read -r path status color _ <<< "$session_info"
+        printf "${color}%-4d %-50s %-10s${NC}\n" "$num" "$path" "$status"
+        ((num++))
+    done
+}
+
+# Function to get user choice for session selection
+_session_nvim_get_session_choice() {
+    local action="$1"
+    local max_count="$2"
+    local prompt="Enter session number"
+    
+    [ "$action" = "delete" ] && prompt="Enter session number to DELETE"
+    
+    printf "%s (1-%d): " "$prompt" "$max_count"
+    read -r choice
+    
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$max_count" ]; then
+        echo "$choice"
+        return 0
+    else
+        echo -e "${RED}Invalid session number '$choice'${NC}" >&2
+        return 1
+    fi
+}
+
+# Function to handle session deletion with lock check
+_session_nvim_delete_session() {
+    local session_info="$1"
+    IFS=':' read -r path status _ session_dir <<< "$session_info"
+    
+    if [ "$status" = "ACTIVE" ]; then
+        local lock_file="$session_dir/.session.lock"
+        local lock_pid=$(head -n1 "$lock_file" 2>/dev/null | tr -d '[:space:]')
+        echo -e "${RED}Error: Cannot delete active session '$path' (PID: $lock_pid)${NC}"
+        return 1
+    fi
+    
+    if rm -rf "$session_dir"; then
+        echo -e "${GREEN}✓ Session deleted: $path${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to delete session directory${NC}"
+        return 1
+    fi
+}
+
+# Function to handle interactive menu choices
+_session_nvim_handle_menu_choice() {
+    local action="$1"
+    local -n sessions_ref=$2
+    
+    case "$action" in
+        "o"|"O")
+            local choice
+            choice=$(_session_nvim_get_session_choice "open" "${#sessions_ref[@]}")
+            if [ $? -eq 0 ]; then
+                local session_info="${sessions_ref[$((choice-1))]}"
+                IFS=':' read -r path _ _ _ <<< "$session_info"
+                echo -e "${GREEN}Opening session: $path${NC}"
+                
+                local actual_path="$path"
+                [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
+                nvim "$actual_path"
+            fi
+            ;;
+        "d"|"D")
+            local choice
+            choice=$(_session_nvim_get_session_choice "delete" "${#sessions_ref[@]}")
+            if [ $? -eq 0 ]; then
+                local session_info="${sessions_ref[$((choice-1))]}"
+                if _session_nvim_delete_session "$session_info"; then
+                    echo
+                    _session_nvim_interactive  # Re-run menu
+                fi
+            fi
+            ;;
+        "c"|"C")
+            _session_nvim_clean
+            echo
+            _session_nvim_interactive  # Re-run menu
+            ;;
+        "h"|"H")
+            _session_nvim_help
+            ;;
+        "q"|"Q"|"")
+            return 0
+            ;;
+    esac
+}
+
+# Main interactive function
 _session_nvim_interactive() {
     echo -e "${BLUE}Neovim Session Status${NC}"
     echo "=========================="
     echo
     
-    if [ ! -d "$SESSIONS_DIR" ]; then
-        echo -e "${YELLOW}No sessions directory found at: $SESSIONS_DIR${NC}"
-        echo
-        echo -e "${BLUE}Commands: (c)lean  --help${NC}"
-        echo -n "Choose action: "
-        read -r action
-        
-        case "$action" in
-            "c"|"clean")
-                _session_nvim_clean
-                ;;
-            "--help"|"-h"|"help")
-                _session_nvim_help
-                ;;
-            "")
-                return 0
-                ;;
-            *)
-                echo -e "${RED}Invalid action '$action'${NC}"
-                return 1
-                ;;
-        esac
-        return
-    fi
+    local sessions counts
+    _session_nvim_collect_sessions sessions counts
     
-    local session_count=0
-    local active_count=0
-    local stale_count=0
-    local closed_count=0
-    local all_sessions=()
-    
-    # Header
-    printf "%-4s %-50s %-10s\n" "NUM" "PATH" "STATUS"
-    printf "%-4s %-50s %-10s\n" "---" "----" "------"
-    
-    # Find all session directories
-    local num=1
-    for session_dir in "$SESSIONS_DIR"/*/; do
-        if [ ! -d "$session_dir" ]; then
-            continue
-        fi
-        
-        session_count=$((session_count + 1))
-        
-        local session_name=$(basename "$session_dir")
-        local session_path=$(_nvim_session_name_to_path "$session_name")
-        all_sessions+=("$session_path")
-        
-        local lock_file="$session_dir/.session.lock"
-        
-        local status="CLOSED"
-        local status_color="$NC"
-        
-        # Check lock status
-        if [ -f "$lock_file" ]; then
-            local lock_content=$(cat "$lock_file" 2>/dev/null)
-            local lock_pid=$(echo "$lock_content" | head -n1 | tr -d '[:space:]')
-            
-            if [ -n "$lock_pid" ] && _nvim_session_is_process_running "$lock_pid"; then
-                status="ACTIVE"
-                status_color="$GREEN"
-                active_count=$((active_count + 1))
-            else
-                status="STALE"
-                status_color="$YELLOW"
-                stale_count=$((stale_count + 1))
-            fi
-        else
-            closed_count=$((closed_count + 1))
-        fi
-        
-        # Print session info with number
-        printf "${status_color}%-4d %-50s %-10s${NC}\n" \
-            "$num" \
-            "$session_path" \
-            "$status"
-        
-        ((num++))
-    done
-    
-    if [ $session_count -eq 0 ]; then
+    if [ "${counts[0]}" -eq 0 ]; then
         echo -e "${YELLOW}No sessions found${NC}"
         echo
         echo -e "${BLUE}Commands: (c)lean  (h)elp  (q)uit${NC}"
@@ -148,129 +196,113 @@ _session_nvim_interactive() {
         while true; do
             echo -n "Choose action: "
             read -n 1 -r action
-            echo  # Add newline after single character input
-            
+            echo
             case "$action" in
                 "c"|"C")
                     _session_nvim_clean
                     echo
-                    # Re-run the interactive menu 
                     _session_nvim_interactive
-                    return 0
+                    return
                     ;;
                 "h"|"H")
                     _session_nvim_help
-                    break
+                    return
                     ;;
                 "q"|"Q"|"")
-                    return 0
-                    ;;
-                *)
-                    # Silently ignore unrecognized input and continue loop
+                    return
                     ;;
             esac
         done
-        return
     fi
     
+    _session_nvim_display_sessions "${sessions[@]}"
+    
     echo
-    echo "Summary:"
-    echo -e "  ${GREEN}Active:${NC} $active_count   ${YELLOW}Stale:${NC} $stale_count   ${NC}Closed:${NC} $closed_count   ${BLUE}Total:${NC} $session_count"
+    printf "Summary: ${GREEN}Active:${NC} %d   ${YELLOW}Stale:${NC} %d   ${NC}Closed:${NC} %d   ${BLUE}Total:${NC} %d\n" \
+           "${counts[1]}" "${counts[2]}" "${counts[3]}" "${counts[0]}"
     echo
     echo -e "${BLUE}Commands: (o)pen  (d)elete  (c)lean  (h)elp  (q)uit${NC}"
     
     while true; do
         echo -n "Choose action: "
         read -n 1 -r action
-        echo  # Add newline after single character input
-        
+        echo
         case "$action" in
             "o"|"O")
-                echo -n "Enter session number (1-$session_count): "
+                echo -n "Enter session number (1-${#sessions[@]}) or press Enter to cancel: "
                 read -r choice
                 
-                if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$session_count" ]; then
-                    local selected="${all_sessions[$((choice-1))]}"
+                if [ -z "$choice" ]; then
+                    continue  # Go back to command prompt
+                elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sessions[@]}" ]; then
+                    local session_info="${sessions[$((choice-1))]}"
+                    IFS=':' read -r path status _ _ <<< "$session_info"
                     
-                    echo -e "${GREEN}Opening session: $selected${NC}"
-                    
-                    # Expand ~ to home directory
-                    local actual_path="$selected"
-                    if [[ "$actual_path" == "~"* ]]; then
-                        actual_path="${actual_path/#\~/$HOME}"
+                    # Check if session is active and confirm
+                    if [ "$status" = "ACTIVE" ]; then
+                        echo -n "Session is already active. Open anyway? (y/N): "
+                        read -r confirm
+                        if [[ ! "$confirm" =~ ^[yY]$ ]]; then
+                            continue  # Go back to command prompt
+                        fi
                     fi
                     
+                    echo -e "${GREEN}Opening session: $path${NC}"
+                    
+                    local actual_path="$path"
+                    [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
                     nvim "$actual_path"
+                    return
                 else
                     echo -e "${RED}Invalid session number '$choice'${NC}"
-                    return 1
                 fi
-                break
                 ;;
             "d"|"D")
-                echo -n "Enter session number to DELETE (1-$session_count): "
+                echo -n "Enter session number to DELETE (1-${#sessions[@]}) or press Enter to cancel: "
                 read -r choice
                 
-                if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "$session_count" ]; then
-                    local selected="${all_sessions[$((choice-1))]}"
+                if [ -z "$choice" ]; then
+                    continue  # Go back to command prompt
+                elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sessions[@]}" ]; then
+                    local session_info="${sessions[$((choice-1))]}"
+                    IFS=':' read -r path status _ _ <<< "$session_info"
                     
-                    # Find the session directory and check if active
-                    for session_dir in "$SESSIONS_DIR"/*/; do
-                        if [ ! -d "$session_dir" ]; then
-                            continue
+                    # Check if session is active and warn
+                    if [ "$status" = "ACTIVE" ]; then
+                        echo -n "Session is currently active. Delete anyway? (y/N): "
+                        read -r confirm
+                        if [[ ! "$confirm" =~ ^[yY]$ ]]; then
+                            continue  # Go back to command prompt
                         fi
-                        
-                        local session_name=$(basename "$session_dir")
-                        local session_path=$(_nvim_session_name_to_path "$session_name")
-                        
-                        if [ "$session_path" = "$selected" ]; then
-                            # Check if session is currently active
-                            local lock_file="$session_dir/.session.lock"
-                            if [ -f "$lock_file" ]; then
-                                local lock_content=$(cat "$lock_file" 2>/dev/null)
-                                local lock_pid=$(echo "$lock_content" | head -n1 | tr -d '[:space:]')
-                                
-                                if [ -n "$lock_pid" ] && _nvim_session_is_process_running "$lock_pid"; then
-                                    echo -e "${RED}Error: Cannot delete active session '$session_path' (PID: $lock_pid)${NC}"
-                                    return 1
-                                fi
-                            fi
-                            
-                            # Delete the session
-                            rm -rf "$session_dir"
-                            if [ $? -eq 0 ]; then
-                                echo -e "${GREEN}✓ Session deleted: $session_path${NC}"
-                                echo
-                                # Re-run the interactive menu to show updated list
-                                _session_nvim_interactive
-                                return 0
-                            else
-                                echo -e "${RED}✗ Failed to delete session directory${NC}"
-                                return 1
-                            fi
-                        fi
-                    done
+                    fi
+                    
+                    if _session_nvim_delete_session "$session_info"; then
+                        echo
+                        _session_nvim_interactive
+                        return
+                    fi
                 else
                     echo -e "${RED}Invalid session number '$choice'${NC}"
-                    return 1
                 fi
                 ;;
             "c"|"C")
                 _session_nvim_clean
                 echo
-                # Re-run the interactive menu to show updated statuses
                 _session_nvim_interactive
-                return 0
+                return
                 ;;
             "h"|"H")
                 _session_nvim_help
-                break
+                return
                 ;;
-            "q"|"Q"|"")
-                return 0
+            "q"|"Q")
+                return
+                ;;
+            "")
+                # Ignore empty input (Enter key)
                 ;;
             *)
-                # Silently ignore unrecognized input and continue loop
+                # Ignore unrecognized input
                 ;;
         esac
     done
@@ -287,30 +319,41 @@ _session_nvim_clean() {
     
     local cleaned=0
     for session_dir in "$SESSIONS_DIR"/*/; do
-        if [ ! -d "$session_dir" ]; then
-            continue
-        fi
+        [ ! -d "$session_dir" ] && continue
         
         local lock_file="$session_dir/.session.lock"
         if [ -f "$lock_file" ]; then
-            local lock_content=$(cat "$lock_file")
-            local lock_pid=$(echo "$lock_content" | head -n1)
-            
-            if [ -n "$lock_pid" ] && ! _nvim_session_is_process_running "$lock_pid"; then
-                local session_name=$(basename "$session_dir")
-                local session_path=$(_nvim_session_name_to_path "$session_name")
+            local lock_pid=$(head -n1 "$lock_file" 2>/dev/null | tr -d '[:space:]')
+            if [ -n "$lock_pid" ] && ! _session_nvim_is_process_running "$lock_pid"; then
+                local session_path=$(_session_nvim_name_to_path "$(basename "$session_dir")")
                 echo "  Removing stale lock for $session_path (PID $lock_pid)"
                 rm "$lock_file"
-                cleaned=$((cleaned + 1))
+                ((cleaned++))
             fi
         fi
     done
     
-    if [ $cleaned -eq 0 ]; then
+    if [ "$cleaned" -eq 0 ]; then
         echo "  No stale locks found"
     else
         echo -e "${GREEN}  Cleaned $cleaned stale lock(s)${NC}"
     fi
+}
+
+# Function to find matching sessions
+_session_nvim_find_matches() {
+    local pattern="$1"
+    local -n matches_ref=$2
+    
+    matches_ref=()
+    [ ! -d "$SESSIONS_DIR" ] && return
+    
+    for session_dir in "$SESSIONS_DIR"/*/; do
+        [ ! -d "$session_dir" ] && continue
+        
+        local session_path=$(_session_nvim_name_to_path "$(basename "$session_dir")")
+        [[ "$session_path" == *"$pattern"* ]] && matches_ref+=("$session_path")
+    done
 }
 
 # Function to open a session or directory
@@ -318,115 +361,69 @@ _session_nvim_open() {
     local session_pattern="$1"
     
     if [ -z "$session_pattern" ]; then
-        # No arguments provided, show all sessions for selection
-        if [ ! -d "$SESSIONS_DIR" ]; then
-            echo -e "${YELLOW}No sessions directory found at: $SESSIONS_DIR${NC}"
-            return 1
-        fi
+        local sessions counts
+        _session_nvim_collect_sessions sessions counts
         
-        local all_sessions=()
-        for session_dir in "$SESSIONS_DIR"/*/; do
-            if [ ! -d "$session_dir" ]; then
-                continue
-            fi
-            
-            local session_name=$(basename "$session_dir")
-            local session_path=$(_nvim_session_name_to_path "$session_name")
-            all_sessions+=("$session_path")
-        done
-        
-        if [ ${#all_sessions[@]} -eq 0 ]; then
+        if [ "${counts[0]}" -eq 0 ]; then
             echo -e "${YELLOW}No sessions found${NC}"
             return 1
         fi
         
         echo -e "${BLUE}Available sessions:${NC}"
-        local i=1
-        for session_path in "${all_sessions[@]}"; do
-            echo "  $i) $session_path"
-            ((i++))
+        for i in "${!sessions[@]}"; do
+            IFS=':' read -r path _ _ _ <<< "${sessions[i]}"
+            echo "  $((i+1))) $path"
         done
+        
         echo
-        echo "Choose a session number (1-$((i-1))):"
+        echo -n "Enter session number (1-${#sessions[@]}) or press Enter to cancel: "
         read -r choice
         
-        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -lt "$i" ]; then
-            local selected="${all_sessions[$((choice-1))]}"
+        if [ -z "$choice" ]; then
+            return 0  # Cancel silently
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sessions[@]}" ]; then
+            IFS=':' read -r path _ _ _ <<< "${sessions[$((choice-1))]}"
+            echo -e "${GREEN}Opening session: $path${NC}"
             
-            echo -e "${GREEN}Opening session: $selected${NC}"
-            
-            # Expand ~ to home directory for the path
-            local actual_path="$selected"
-            if [[ "$actual_path" == "~"* ]]; then
-                actual_path="${actual_path/#\~/$HOME}"
-            fi
-            
-            # Open nvim with the directory path
+            local actual_path="$path"
+            [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
             nvim "$actual_path"
         else
-            echo -e "${RED}Invalid selection${NC}"
+            echo -e "${RED}Invalid session number '$choice'${NC}"
             return 1
         fi
-        return 0
+        return
     fi
     
-    # First, try to find matching sessions if sessions directory exists
-    local matches=()
-    if [ -d "$SESSIONS_DIR" ]; then
-        for session_dir in "$SESSIONS_DIR"/*/; do
-            if [ ! -d "$session_dir" ]; then
-                continue
-            fi
-            
-            local session_name=$(basename "$session_dir")
-            local session_path=$(_nvim_session_name_to_path "$session_name")
-            
-            # Check if pattern matches anywhere in the session path
-            if [[ "$session_path" == *"$session_pattern"* ]]; then
-                matches+=("$session_path")
-            fi
-        done
-    fi
+    local matches
+    _session_nvim_find_matches "$session_pattern" matches
     
-    if [ ${#matches[@]} -eq 1 ]; then
-        # Exact session match found
+    if [ "${#matches[@]}" -eq 1 ]; then
         local session_path="${matches[0]}"
-        
         echo -e "${GREEN}Opening session: $session_path${NC}"
         
-        # Expand ~ to home directory
         local actual_path="$session_path"
-        if [[ "$actual_path" == "~"* ]]; then
-            actual_path="${actual_path/#\~/$HOME}"
-        fi
-        
-        # Open nvim with the directory path
+        [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
         nvim "$actual_path"
         
-    elif [ ${#matches[@]} -gt 1 ]; then
-        # Multiple session matches found
+    elif [ "${#matches[@]}" -gt 1 ]; then
         echo -e "${YELLOW}Multiple sessions found matching '$session_pattern':${NC}"
-        local i=1
-        for session_path in "${matches[@]}"; do
-            echo "  $i) $session_path"
-            ((i++))
+        for i in "${!matches[@]}"; do
+            echo "  $((i+1))) ${matches[i]}"
         done
+        
         echo
-        echo "Please be more specific or choose a number (1-$((i-1))):"
+        echo -n "Enter session number (1-${#matches[@]}) or press Enter to cancel: "
         read -r choice
         
-        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -lt "$i" ]; then
+        if [ -z "$choice" ]; then
+            return 0  # Cancel silently
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#matches[@]}" ]; then
             local selected="${matches[$((choice-1))]}"
-            
             echo -e "${GREEN}Opening session: $selected${NC}"
             
-            # Expand ~ to home directory
             local actual_path="$selected"
-            if [[ "$actual_path" == "~"* ]]; then
-                actual_path="${actual_path/#\~/$HOME}"
-            fi
-            
-            # Open nvim with the directory path
+            [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
             nvim "$actual_path"
         else
             echo -e "${RED}Invalid selection${NC}"
@@ -436,25 +433,15 @@ _session_nvim_open() {
     else
         # No session matches found, treat as regular path
         local target_path="$session_pattern"
+        [[ "$target_path" == "~"* ]] && target_path="${target_path/#\~/$HOME}"
+        [[ "$target_path" != /* ]] && target_path="$(pwd)/$target_path"
         
-        # Expand ~ to home directory
-        if [[ "$target_path" == "~"* ]]; then
-            target_path="${target_path/#\~/$HOME}"
-        fi
-        
-        # Convert to absolute path if relative
-        if [[ "$target_path" != /* ]]; then
-            target_path="$(pwd)/$target_path"
-        fi
-        
-        # Check if the path exists and what type it is
         if [ -f "$target_path" ]; then
             echo -e "${RED}Error: session-nvim open only works with directories, not files${NC}"
             echo -e "${YELLOW}Use 'nvim $session_pattern' to open files directly${NC}"
             return 1
         elif [ -d "$target_path" ]; then
             echo -e "${GREEN}Opening directory: $target_path${NC}"
-            # Open nvim with the directory path
             nvim "$target_path"
         else
             echo -e "${RED}Error: Directory does not exist: $target_path${NC}"
@@ -468,117 +455,48 @@ _session_nvim_delete() {
     local session_pattern="$1"
     
     if [ -z "$session_pattern" ]; then
-        # No arguments provided, show all sessions for selection
-        if [ ! -d "$SESSIONS_DIR" ]; then
-            echo -e "${YELLOW}No sessions directory found at: $SESSIONS_DIR${NC}"
-            return 1
-        fi
+        local sessions counts
+        _session_nvim_collect_sessions sessions counts
         
-        local all_sessions=()
-        for session_dir in "$SESSIONS_DIR"/*/; do
-            if [ ! -d "$session_dir" ]; then
-                continue
-            fi
-            
-            local session_name=$(basename "$session_dir")
-            local session_path=$(_nvim_session_name_to_path "$session_name")
-            all_sessions+=("$session_path")
-        done
-        
-        if [ ${#all_sessions[@]} -eq 0 ]; then
+        if [ "${counts[0]}" -eq 0 ]; then
             echo -e "${YELLOW}No sessions found${NC}"
             return 1
         fi
         
         echo -e "${BLUE}Available sessions to delete:${NC}"
-        local i=1
-        for session_path in "${all_sessions[@]}"; do
-            echo "  $i) $session_path"
-            ((i++))
+        for i in "${!sessions[@]}"; do
+            IFS=':' read -r path _ _ _ <<< "${sessions[i]}"
+            echo "  $((i+1))) $path"
         done
+        
         echo
-        echo "Choose a session number to DELETE (1-$((i-1))):"
+        echo -n "Enter session number to DELETE (1-${#sessions[@]}) or press Enter to cancel: "
         read -r choice
         
-        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -lt "$i" ]; then
-            local selected="${all_sessions[$((choice-1))]}"
-            
-            # Find and delete the session
-            for session_dir in "$SESSIONS_DIR"/*/; do
-                if [ ! -d "$session_dir" ]; then
-                    continue
-                fi
-                
-                local session_name=$(basename "$session_dir")
-                local session_path=$(_nvim_session_name_to_path "$session_name")
-                
-                if [ "$session_path" = "$selected" ]; then
-                    # Check if session is currently active
-                    local lock_file="$session_dir/.session.lock"
-                    if [ -f "$lock_file" ]; then
-                        local lock_content=$(cat "$lock_file" 2>/dev/null)
-                        local lock_pid=$(echo "$lock_content" | head -n1 | tr -d '[:space:]')
-                        
-                        if [ -n "$lock_pid" ] && _nvim_session_is_process_running "$lock_pid"; then
-                            echo -e "${RED}Error: Cannot delete active session '$session_path' (PID: $lock_pid)${NC}"
-                            return 1
-                        fi
-                    fi
-                    
-                    # Delete the session
-                    rm -rf "$session_dir"
-                    if [ $? -eq 0 ]; then
-                        echo -e "${GREEN}✓ Session deleted: $session_path${NC}"
-                    else
-                        echo -e "${RED}✗ Failed to delete session directory${NC}"
-                        return 1
-                    fi
-                    return 0
-                fi
-            done
+        if [ -z "$choice" ]; then
+            return 0  # Cancel silently
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sessions[@]}" ]; then
+            _session_nvim_delete_session "${sessions[$((choice-1))]}"
         else
             echo -e "${RED}Invalid selection${NC}"
             return 1
         fi
-        return 0
+        return
     fi
     
-    # Look for EXACT match only
+    # Look for exact match only
     for session_dir in "$SESSIONS_DIR"/*/; do
-        if [ ! -d "$session_dir" ]; then
-            continue
-        fi
+        [ ! -d "$session_dir" ] && continue
         
-        local session_name=$(basename "$session_dir")
-        local session_path=$(_nvim_session_name_to_path "$session_name")
-        
-        # Check for exact match only
+        local session_path=$(_session_nvim_name_to_path "$(basename "$session_dir")")
         if [ "$session_path" = "$session_pattern" ]; then
-            # Check if session is currently active
-            local lock_file="$session_dir/.session.lock"
-            if [ -f "$lock_file" ]; then
-                local lock_content=$(cat "$lock_file" 2>/dev/null)
-                local lock_pid=$(echo "$lock_content" | head -n1 | tr -d '[:space:]')
-                
-                if [ -n "$lock_pid" ] && _nvim_session_is_process_running "$lock_pid"; then
-                    echo -e "${RED}Error: Cannot delete active session '$session_path' (PID: $lock_pid)${NC}"
-                    return 1
-                fi
-            fi
-            
-            # Delete the session
-            rm -rf "$session_dir"
-            if [ $? -eq 0 ]; then
-                echo -e "${GREEN}✓ Session deleted: $session_path${NC}"
-            else
-                echo -e "${RED}✗ Failed to delete session directory${NC}"
-                return 1
-            fi
-            return 0
+            local status_info=$(_session_nvim_get_lock_status "$session_dir")
+            local session_info="$session_path:${status_info%:*}::$session_dir"
+            _session_nvim_delete_session "$session_info"
+            return
         fi
     done
     
-    # No exact match found
     echo -e "${RED}Error: No session found with exact path '$session_pattern'${NC}"
     echo -e "${YELLOW}Use 'session-nvim delete' without arguments to see available sessions${NC}"
     return 1
@@ -586,71 +504,62 @@ _session_nvim_delete() {
 
 # Show help
 _session_nvim_help() {
-    echo "Neovim Session Management"
-    echo "========================"
-    echo
-    echo "Usage: session-nvim [command] [args...]"
-    echo
-    echo "Commands:"
-    echo "  open [pattern]            - Open a session by pattern or directory"
-    echo "  delete <exact_path>       - Delete a session by exact path"
-    echo "  clean                     - Remove stale session locks"
-    echo "  --help, -h, help          - Show this help"
-    echo
-    echo "Interactive Mode (default):"
-    echo "  session-nvim              - Show sessions with interactive menu"
-    echo "    (o)pen    - Choose session number to open"
-    echo "    (d)elete  - Choose session number to delete"
-    echo "    (c)lean   - Remove stale locks"
-    echo "    --help    - Show this help"
-    echo
-    echo "Session Status:"
-    echo "  ACTIVE - Session currently open in Neovim"
-    echo "  STALE  - Lock file exists but process is dead"
-    echo "  CLOSED - No lock file, session is available"
-    echo
-    echo "Examples:"
-    echo "  session-nvim              # Interactive menu"
-    echo "  session-nvim open         # Interactive session picker"
-    echo "  session-nvim open frontend# Open session matching 'frontend'"
-    echo "  session-nvim open ~/proj  # Open directory (creates new session)"
-    echo "  session-nvim delete ~/old # Delete specific session"
-    echo "  session-nvim clean        # Remove stale locks"
-    echo
-    echo "Notes:"
-    echo "  - 'open' supports pattern matching and directory creation"
-    echo "  - 'delete' requires exact session paths"
-    echo "  - Files are not supported for 'open' - use 'nvim filename' directly"
-    echo "  - Your terminal working directory remains unchanged"
+    cat << 'EOF'
+Neovim Session Management
+========================
+
+Usage: session-nvim [command] [args...]
+
+Commands:
+  open [pattern]            - Open a session by pattern or directory
+  delete <exact_path>       - Delete a session by exact path
+  clean                     - Remove stale session locks
+  --help, -h, help          - Show this help
+
+Interactive Mode (default):
+  session-nvim              - Show sessions with interactive menu
+    (o)pen    - Choose session number to open
+    (d)elete  - Choose session number to delete
+    (c)lean   - Remove stale locks
+    --help    - Show this help
+
+Session Status:
+  ACTIVE - Session currently open in Neovim
+  STALE  - Lock file exists but process is dead
+  CLOSED - No lock file, session is available
+
+Examples:
+  session-nvim              # Interactive menu
+  session-nvim open         # Interactive session picker
+  session-nvim open frontend# Open session matching 'frontend'
+  session-nvim open ~/proj  # Open directory (creates new session)
+  session-nvim delete ~/old # Delete specific session
+  session-nvim clean        # Remove stale locks
+
+Notes:
+  - 'open' supports pattern matching and directory creation
+  - 'delete' requires exact session paths
+  - Files are not supported for 'open' - use 'nvim filename' directly
+  - Your terminal working directory remains unchanged
+EOF
 }
 
 # Main session-nvim function
 session-nvim() {
     local command="$1"
-    shift  # Remove command from arguments
+    shift
     
     case "$command" in
-        "open")
-            _session_nvim_open "$@"
-            ;;
-        "delete")
-            _session_nvim_delete "$@"
-            ;;
-        "clean")
-            _session_nvim_clean
-            ;;
-        ""|*)
-            # No command or unknown command - show interactive menu
-            if [ -n "$command" ] && [ "$command" != "--help" ] && [ "$command" != "-h" ] && [ "$command" != "help" ]; then
+        "open")    _session_nvim_open "$@" ;;
+        "delete")  _session_nvim_delete "$@" ;;
+        "clean")   _session_nvim_clean ;;
+        ""|*)      
+            if [ -n "$command" ] && [[ ! "$command" =~ ^(-h|--help|help)$ ]]; then
                 echo -e "${RED}Error: Unknown command '$command'${NC}"
                 echo
             fi
             
-            if [ "$command" = "--help" ] || [ "$command" = "-h" ] || [ "$command" = "help" ]; then
-                _session_nvim_help
-            else
-                _session_nvim_interactive
-            fi
+            [[ "$command" =~ ^(-h|--help|help)$ ]] && _session_nvim_help || _session_nvim_interactive
             ;;
     esac
 }
