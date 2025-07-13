@@ -280,27 +280,129 @@ M.init = function()
   vim.api.nvim_create_autocmd("VimEnter", {
     group = vim.api.nvim_create_augroup("SimpleSessionLoad", { clear = true }),
     callback = function()
+      print("=== SESSION DEBUG START ===")
+      print("Current working directory at VimEnter:", vim.fn.getcwd())
+      print("Current argc():", vim.fn.argc())
+      
+      -- Use original args if available, fallback to current
+      local original_args = _G.original_nvim_args
+      local use_cwd = original_args and original_args.cwd or vim.fn.getcwd()
+      local use_argc = original_args and original_args.argc or vim.fn.argc()
+      local use_argv = original_args and original_args.argv or {}
+      
+      print("ORIGINAL working directory:", use_cwd)
+      print("ORIGINAL argc:", use_argc)
+      
+      -- Print original arguments
+      for i = 0, use_argc - 1 do
+        local arg = use_argv[i]
+        print("ORIGINAL argv[" .. i .. "]:", vim.inspect(arg))
+      end
+      
       local should_load_session = false
+      local target_directory = nil
 
-      if vim.fn.argc() == 0 then
-        -- No arguments - always load session
+      if use_argc == 0 then
+        print("No arguments case")
         should_load_session = true
-      elseif vim.fn.argc() == 1 then
-        -- One argument - check if it's a directory
-        local arg = vim.v.argv[2] -- argv[1] is nvim itself, argv[2] is first argument
-
-        if arg and vim.fn.isdirectory(arg) == 1 then
-          should_load_session = true
-          -- Change to the directory first
-          vim.cmd("cd " .. vim.fn.fnameescape(arg))
+        target_directory = use_cwd
+        print("Target directory:", target_directory)
+      else
+        print("Has arguments case")
+        -- Check each original argument
+        for i = 0, use_argc - 1 do
+          local arg = use_argv[i]
+          
+          if type(arg) == "table" then
+            arg = arg[1]
+          end
+          
+          if arg and type(arg) == "string" then
+            print("Processing original arg:", arg)
+            
+            -- Resolve relative paths against original cwd
+            local resolved_path
+            if arg == "." then
+              resolved_path = use_cwd
+            elseif arg:match("^/") then
+              -- Already absolute
+              resolved_path = arg
+            else
+              -- Relative path
+              resolved_path = use_cwd .. "/" .. arg
+            end
+            
+            print("Resolved path:", resolved_path)
+            print("Is directory?", vim.fn.isdirectory(resolved_path) == 1)
+            print("Is file?", vim.fn.filereadable(resolved_path) == 1)
+            
+            if vim.fn.isdirectory(resolved_path) == 1 then
+              print("Found directory argument:", resolved_path)
+              should_load_session = true
+              target_directory = vim.fn.fnamemodify(resolved_path, ":p")
+              print("Resolved target directory:", target_directory)
+              break
+            elseif vim.fn.filereadable(resolved_path) == 1 then
+              print("Found file argument:", resolved_path)
+              target_directory = vim.fn.fnamemodify(resolved_path, ":p:h")
+              should_load_session = false
+              print("File's directory:", target_directory)
+              break
+            else
+              print("Argument is neither existing file nor directory:", resolved_path)
+            end
+          end
+        end
+        
+        if not target_directory then
+          print("No valid files/dirs found, using first argument as potential directory")
+          local first_arg = use_argv[0]
+          if type(first_arg) == "table" then
+            first_arg = first_arg[1]
+          end
+          
+          if first_arg and type(first_arg) == "string" then
+            if first_arg == "." then
+              target_directory = use_cwd
+            else
+              target_directory = use_cwd .. "/" .. first_arg
+            end
+            target_directory = vim.fn.fnamemodify(target_directory, ":p")
+            should_load_session = true
+            print("Fallback target directory:", target_directory)
+          end
         end
       end
 
-      if should_load_session then
+      print("Final decision:")
+      print("  should_load_session:", should_load_session)
+      print("  target_directory:", target_directory)
+      
+      if should_load_session and target_directory then
+        print("About to change directory to:", target_directory)
+        
+        if vim.fn.isdirectory(target_directory) == 1 then
+          vim.cmd("cd " .. vim.fn.fnameescape(target_directory))
+          print("Changed directory to:", vim.fn.getcwd())
+        else
+          print("Target directory doesn't exist, creating:", target_directory)
+          vim.fn.mkdir(target_directory, "p")
+          vim.cmd("cd " .. vim.fn.fnameescape(target_directory))
+          print("Created and changed to:", vim.fn.getcwd())
+        end
+        
+        print("About to load session...")
         vim.defer_fn(function()
+          print("Loading session for directory:", vim.fn.getcwd())
+          print("Session name will be:", config.get_session_name())
+          print("Session directory will be:", config.get_session_dir())
           load_session()
         end, 50)
+      else
+        print("Not loading session")
       end
+      
+      print("=== SESSION DEBUG END ===")
     end,
   })
 
