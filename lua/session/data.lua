@@ -110,47 +110,30 @@ local function collect_registers()
     local content = vim.fn.getreg(reg)
     local regtype = vim.fn.getregtype(reg)
     
-    -- Only save if content is non-empty and serializable
+    -- Only save if content is non-empty
     if content ~= "" and type(content) == "string" and type(regtype) == "string" then
-      -- Clean the content to remove problematic characters
-      local cleaned_content = clean_register_content(content)
+      -- Base64 encode all register content for safe JSON storage
+      local encoded_content = vim.base64.encode(content)
       
-      -- Skip if content becomes empty after cleaning
-      if cleaned_content == "" then
-        goto continue
-      end
-      
-      local test_data = {
-        content = cleaned_content,
+      local register_data = {
+        content = encoded_content,
         type = regtype,
+        encoded = true  -- Flag to indicate this needs decoding
       }
       
-      -- Test if this specific register data can be JSON encoded
-      local ok, err = pcall(vim.fn.json_encode, test_data)
+      -- Test JSON encoding (should always work with base64)
+      local ok, err = pcall(vim.fn.json_encode, register_data)
       if ok then
-        registers[reg] = test_data
+        registers[reg] = register_data
       else
-        -- Still failing after cleaning - try super aggressive cleaning
-        local super_cleaned = cleaned_content:gsub("[^%w%s%p]", ""):gsub("%p", "")
-        if super_cleaned ~= "" then
-          local super_test_data = {
-            content = super_cleaned,
-            type = regtype,
-          }
-          local super_ok, _ = pcall(vim.fn.json_encode, super_test_data)
-          if super_ok then
-            registers[reg] = super_test_data
-          end
-        end
+        -- This should rarely happen with base64, but log if it does
+        vim.notify("Failed to encode register " .. reg .. ": " .. tostring(err), vim.log.levels.WARN)
       end
-      
-      ::continue::
     end
   end
   
   return registers
 end
-
 local function collect_search_history()
   local history = {}
   local count = vim.fn.histnr('search')
@@ -265,7 +248,23 @@ local function restore_registers(registers)
   
   for reg, data in pairs(registers) do
     if config.registers_to_save and vim.tbl_contains(config.registers_to_save, reg) then
-      vim.fn.setreg(reg, data.content, data.type)
+      local content = data.content
+      
+      -- Decode if it was encoded (should be true for all new saves)
+      if data.encoded then
+        local ok, decoded = pcall(vim.base64.decode, content)
+        if ok then
+          content = decoded
+        else
+          vim.notify("Failed to decode register " .. reg, vim.log.levels.WARN)
+          goto continue
+        end
+      end
+      
+      -- Restore the register
+      vim.fn.setreg(reg, content, data.type)
+      
+      ::continue::
     end
   end
 end

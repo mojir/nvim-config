@@ -31,6 +31,13 @@ local function clear_global_marks()
 end
 
 local function save_session()
+  -- Handle session save conflicts (auto-skip if locked)
+  local save_result = lock.handle_session_save()
+  
+  if save_result == false then
+    return -- Skip save due to lock conflict
+  end
+  
   -- Temporarily change to locked directory for all session operations
   local original_cwd = vim.fn.getcwd()
   local target_dir = session_locked_to_directory or original_cwd
@@ -76,10 +83,14 @@ local function load_session()
   -- Lock to current directory when session loads
   session_locked_to_directory = vim.fn.getcwd()
 
-  if not lock.acquire_lock(session_locked_to_directory) then
-    print("Another Neovim instance is using this session. Opening without session.")
+  -- Handle session load conflicts (simplified - no read-only)
+  local load_result = lock.handle_session_load(session_locked_to_directory)
+
+  if load_result == false then
+    print("Session loading cancelled")
     return
   end
+  -- load_result == true means normal load with acquired lock
 
   local session_file = config.get_session_file()
 
@@ -88,7 +99,7 @@ local function load_session()
     vim.cmd("source " .. vim.fn.fnameescape(session_file))
     session_loaded = true
 
-    -- Load enhanced session data
+    -- Load enhanced session data and clear navigation state
     vim.defer_fn(function()
       local data_loaded = data.load_session_data()
 
@@ -96,6 +107,10 @@ local function load_session()
       if not data_loaded then
         data.save_session_data()
       end
+
+      -- Clear navigation state after session restoration
+      vim.cmd("silent! clearjumps")
+      vim.cmd("silent! delmarks!")
 
       -- Change to original directory after loading session data
       if data_loaded then
@@ -132,10 +147,12 @@ function M.switch_to_session(target_session_name)
     lock.release_lock() -- Release old session's lock
   end
 
-  -- Clear current session
+  -- Clear current session state
   vim.cmd("silent! %bdelete!")
-  clear_global_marks()
   tracking.clear_access_history()
+
+  -- Clear navigation state immediately for clean slate
+  vim.cmd("silent! clearjumps")
 
   -- Convert session name back to directory path
   local target_path = target_session_name:gsub("_", "/")
@@ -157,13 +174,16 @@ function M.switch_to_session(target_session_name)
   -- Update the locked directory and try to acquire lock for new session
   session_locked_to_directory = target_path
 
-if not lock.acquire_lock(session_locked_to_directory) then
-  vim.schedule(function()
-    print("Cannot switch: target session is locked by another Neovim instance")
-  end)
-  session_loaded = false
-  return
-end
+  -- Handle lock acquisition for target session (simplified)
+  local load_result = lock.handle_session_load(session_locked_to_directory)
+
+  if load_result == false then
+    vim.schedule(function()
+      print("Cannot switch: session loading cancelled")
+    end)
+    session_loaded = false
+    return
+  end
 
   session_loaded = true
 
@@ -171,7 +191,29 @@ end
   local session_file = config.session_dir .. target_session_name .. "/session.vim"
   vim.cmd("source " .. vim.fn.fnameescape(session_file))
 
-  -- ... rest of existing load logic
+  -- Load session data and clear navigation state again after session loads
+  vim.defer_fn(function()
+    local data_loaded = data.load_session_data()
+
+    -- Clear navigation state after session restoration (for safety)
+    vim.cmd("silent! clearjumps")
+
+    -- Change to target directory
+    if data_loaded then
+      local session_data = data.get_last_loaded_data()
+      if session_data and session_data.original_cwd and vim.fn.isdirectory(session_data.original_cwd) == 1 then
+        vim.cmd("cd " .. vim.fn.fnameescape(session_data.original_cwd))
+      end
+    else
+      -- Fallback to target path if no session data
+      vim.cmd("cd " .. vim.fn.fnameescape(target_path))
+    end
+
+    -- Reload nvim-tree for new session
+    if pcall(require, "nvim-tree.api") then
+      require("nvim-tree.api").tree.reload()
+    end
+  end, 100)
 end
 function M.delete_session()
   local session_dir = config.get_session_dir()

@@ -1,7 +1,6 @@
 local config = require("session.config")
 local core = require("session.core")
 local tracking = require("session.tracking")
-local lock = require("session.lock")
 
 local M = {}
 
@@ -108,8 +107,8 @@ local function format_relative_time(timestamp)
   end
 end
 
--- Helper function to check if a session is locked by another instance
-local function is_session_locked(session_name)
+-- Helper function to get enhanced session lock status
+local function get_session_lock_status(session_name)
   -- Convert session name back to directory path
   local target_path = session_name:gsub("_", "/")
   
@@ -127,8 +126,33 @@ local function is_session_locked(session_name)
     target_path = vim.fn.expand("~")
   end
   
-  -- Check if this session is locked (without actually acquiring the lock)
-  return not lock.can_acquire_lock(target_path)
+  -- Use the enhanced lock system
+  local lock_dir = config.session_dir .. vim.fn.substitute(target_path, "[/\\:]", "_", "g") .. "/"
+  local lock_file = lock_dir .. ".session.lock"
+  
+  if vim.fn.filereadable(lock_file) == 1 then
+    local lock_content = vim.fn.readfile(lock_file)
+    if #lock_content >= 2 then
+      local locked_pid = tonumber(lock_content[1])
+      if locked_pid then
+        -- Check if process is actually running
+        local handle = io.popen("kill -0 " .. locked_pid .. " 2>/dev/null; echo $?")
+        if handle then
+          local result = handle:read("*line")
+          handle:close()
+          local is_running = result == "0"
+          
+          return {
+            locked = true,
+            active = is_running,
+            pid = locked_pid
+          }
+        end
+      end
+    end
+  end
+  
+  return { locked = false, active = false }
 end
 
 -- Helper function to create session display items
@@ -142,16 +166,20 @@ local function create_session_display_items(session_items, current_info)
     local buffer_count = get_session_buffer_count(session.name)
     local git_branch = get_session_git_branch(session.name)
     
+    -- Get enhanced lock status
+    local lock_status = get_session_lock_status(session.name)
+    
     -- Check session status
     local is_current = current_info.loaded and current_info.name == session.name
-    local is_locked = is_session_locked(session.name)
     
     -- Choose appropriate marker
     local marker
     if is_current then
       marker = " ➤ "  -- Current session
-    elseif is_locked then
-      marker = "🔒 "  -- Locked session
+    elseif lock_status.active then
+      marker = "🔒 "  -- Actively locked (prevent selection)
+    elseif lock_status.locked then
+      marker = "💀 "  -- Stale lock (allow selection with cleanup)
     else
       marker = "   "  -- Available session
     end
@@ -169,8 +197,9 @@ local function create_session_display_items(session_items, current_info)
       relative_time = relative_time,
       git_branch = git_branch,
       timestamp = session.timestamp,
-      is_locked = is_locked,
-      is_current = is_current,
+      locked = lock_status.active,  -- Only prevent selection for ACTIVE locks
+      current = is_current,
+      stale_lock = lock_status.locked and not lock_status.active,
     })
   end
   
@@ -205,8 +234,9 @@ local function create_session_display_items(session_items, current_info)
       display = display,
       dir = info.session.dir,
       timestamp = info.session.timestamp,
-      locked = info.is_locked,
-      current = info.is_current,
+      locked = info.locked,        -- Only true for actively locked sessions
+      current = info.current,
+      stale_lock = info.stale_lock, -- True for stale locks (selectable)
     })
   end
   
@@ -238,7 +268,7 @@ function M.session_picker()
   
   require("telescope.pickers")
     .new({}, {
-      prompt_title = "Sessions (🔒 = locked) - <C-d> to delete, <Tab> to select",
+      prompt_title = "Sessions (🔒 = locked, 💀 = stale) - <C-d> to delete, <Tab> to select",
       finder = require("telescope.finders").new_table({
         results = enhanced_session_items,
         entry_maker = function(entry)
@@ -249,6 +279,7 @@ function M.session_picker()
             path = entry.dir,
             locked = entry.locked,
             current = entry.current,
+            stale_lock = entry.stale_lock,
           }
         end,
       }),
@@ -264,7 +295,7 @@ function M.session_picker()
             return
           end
           
-          -- Normal selection for unlocked sessions
+          -- Normal selection for unlocked sessions (including stale locks)
           actions.close(prompt_bufnr)
           
           if selection then
@@ -305,7 +336,7 @@ function M.session_picker()
             return
           end
           
-          local current_info = core.get_current_session_info()
+          current_info = core.get_current_session_info()
           local deleted_count = 0
           local deleted_current = false
           
@@ -339,11 +370,6 @@ function M.session_picker()
           local new_finder = require("telescope.finders").new_table({
             results = new_enhanced_items,
             entry_maker = function(entry)
-              local hl_group = nil
-              if entry.locked then
-                hl_group = { { 0, #entry.display, "Comment" } }  -- Dim locked sessions
-              end
-              
               return {
                 value = entry.name,
                 display = entry.display,
@@ -351,7 +377,7 @@ function M.session_picker()
                 path = entry.dir,
                 locked = entry.locked,
                 current = entry.current,
-                highlight = hl_group,
+                stale_lock = entry.stale_lock,
               }
             end,
           })
