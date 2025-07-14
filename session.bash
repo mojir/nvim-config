@@ -221,7 +221,7 @@ _session_nvim_interactive() {
     printf "Summary: ${GREEN}Active:${NC} %d   ${YELLOW}Stale:${NC} %d   ${NC}Closed:${NC} %d   ${BLUE}Total:${NC} %d\n" \
            "${counts[1]}" "${counts[2]}" "${counts[3]}" "${counts[0]}"
     echo
-    echo -e "${BLUE}Commands: (o)pen  (d)elete  (c)lean  (h)elp  (q)uit${NC}"
+    echo -e "${BLUE}Commands: (o)pen  (g)oto  (d)elete  (c)lean  (h)elp  (q)uit${NC}"
     
     while true; do
         echo -n "Choose action: "
@@ -253,6 +253,26 @@ _session_nvim_interactive() {
                     [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
                     nvim "$actual_path"
                     return
+                else
+                    echo -e "${RED}Invalid session number '$choice'${NC}"
+                fi
+                ;;
+              "g"|"G")
+                echo -n "Enter session number to GO TO (1-${#sessions[@]}) or press Enter to cancel: "
+                read -r choice
+                
+                if [ -z "$choice" ]; then
+                    continue  # Go back to command prompt
+                elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sessions[@]}" ]; then
+                    local session_info="${sessions[$((choice-1))]}"
+                    IFS=':' read -r path _ _ _ <<< "$session_info"
+                    
+                    local actual_path="$path"
+                    [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
+                    
+                    echo -e "${GREEN}Changing to: $path${NC}"
+                    cd "$actual_path"
+                    return  # Exit the function to stay in the new directory
                 else
                     echo -e "${RED}Invalid session number '$choice'${NC}"
                 fi
@@ -519,6 +539,7 @@ Commands:
 Interactive Mode (default):
   session-nvim              - Show sessions with interactive menu
     (o)pen    - Choose session number to open
+    (g)oto    - Choose session number to cd into
     (d)elete  - Choose session number to delete
     (c)lean   - Remove stale locks
     --help    - Show this help
