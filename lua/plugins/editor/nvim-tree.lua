@@ -3,7 +3,18 @@ local ripgrep_config = require("config.ripgrep")
 return {
   {
     "nvim-tree/nvim-tree.lua",
-    lazy = false,
+    cmd = { "NvimTreeToggle", "NvimTreeOpen", "NvimTreeFocus" },  -- Lazy load on commands
+    keys = {
+      { "<C-n>", "<cmd>NvimTreeToggle<cr>", desc = "Toggle nvim-tree" },
+      { "<C-M-n>", function()
+        local api = require("nvim-tree.api")
+        if api.tree.is_visible() then
+          api.tree.find_file({ focus = true })
+        else
+          api.tree.open({ find_file = true })
+        end
+      end, desc = "Toggle tree and find current file" },
+    },
     dependencies = {
       "nvim-tree/nvim-web-devicons",
     },
