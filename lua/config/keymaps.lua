@@ -82,7 +82,7 @@ vim.keymap.set("n", "<leader><Right>", "<C-i>", { desc = "Jump forward" })
 vim.keymap.set("n", "<leader>c<space>", "gcc", { desc = "Toggle comment line", remap = true })
 vim.keymap.set("v", "<leader>c<space>", "gc", { desc = "Toggle comment selection", remap = true })
 
-vim.keymap.set("n", "<leader>tq", function()
+vim.keymap.set("n", "<leader>qq", function()
   if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
     vim.cmd("cclose")
   else
