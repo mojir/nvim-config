@@ -470,6 +470,89 @@ _session_nvim_open() {
     fi
 }
 
+# Function to goto (cd into) a session directory
+_session_nvim_goto() {
+    local session_pattern="$1"
+    
+    if [ -z "$session_pattern" ]; then
+        local sessions counts
+        _session_nvim_collect_sessions sessions counts
+        
+        if [ "${counts[0]}" -eq 0 ]; then
+            echo -e "${YELLOW}No sessions found${NC}"
+            return 1
+        fi
+        
+        echo -e "${BLUE}Available sessions to go to:${NC}"
+        for i in "${!sessions[@]}"; do
+            IFS=':' read -r path _ _ _ <<< "${sessions[i]}"
+            echo "  $((i+1))) $path"
+        done
+        
+        echo
+        echo -n "Enter session number to GO TO (1-${#sessions[@]}) or press Enter to cancel: "
+        read -r choice
+        
+        if [ -z "$choice" ]; then
+            return 0  # Cancel silently
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#sessions[@]}" ]; then
+            IFS=':' read -r path _ _ _ <<< "${sessions[$((choice-1))]}"
+            
+            local actual_path="$path"
+            [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
+            
+            echo -e "${GREEN}Changing to: $path${NC}"
+            cd "$actual_path"
+        else
+            echo -e "${RED}Invalid selection${NC}"
+            return 1
+        fi
+        return
+    fi
+    
+    local matches
+    _session_nvim_find_matches "$session_pattern" matches
+    
+    if [ "${#matches[@]}" -eq 1 ]; then
+        local session_path="${matches[0]}"
+        
+        local actual_path="$session_path"
+        [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
+        
+        echo -e "${GREEN}Changing to: $session_path${NC}"
+        cd "$actual_path"
+        
+    elif [ "${#matches[@]}" -gt 1 ]; then
+        echo -e "${YELLOW}Multiple sessions found matching '$session_pattern':${NC}"
+        for i in "${!matches[@]}"; do
+            echo "  $((i+1))) ${matches[i]}"
+        done
+        
+        echo
+        echo -n "Enter session number (1-${#matches[@]}) or press Enter to cancel: "
+        read -r choice
+        
+        if [ -z "$choice" ]; then
+            return 0  # Cancel silently
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#matches[@]}" ]; then
+            local selected="${matches[$((choice-1))]}"
+            
+            local actual_path="$selected"
+            [[ "$actual_path" == "~"* ]] && actual_path="${actual_path/#\~/$HOME}"
+            
+            echo -e "${GREEN}Changing to: $selected${NC}"
+            cd "$actual_path"
+        else
+            echo -e "${RED}Invalid selection${NC}"
+            return 1
+        fi
+    else
+        echo -e "${RED}Error: No session found matching '$session_pattern'${NC}"
+        echo -e "${YELLOW}Use 'session-nvim goto' without arguments to see available sessions${NC}"
+        return 1
+    fi
+}
+
 # Function to delete a session
 _session_nvim_delete() {
     local session_pattern="$1"
@@ -532,6 +615,7 @@ Usage: session-nvim [command] [args...]
 
 Commands:
   open [pattern]            - Open a session by pattern or directory
+  goto [pattern]            - Change directory to a session path
   delete <exact_path>       - Delete a session by exact path
   clean                     - Remove stale session locks
   --help, -h, help          - Show this help
@@ -550,12 +634,14 @@ Session Status:
   CLOSED - No lock file, session is available
 
 Examples:
-  session-nvim              # Interactive menu
-  session-nvim open         # Interactive session picker
-  session-nvim open frontend# Open session matching 'frontend'
-  session-nvim open ~/proj  # Open directory (creates new session)
-  session-nvim delete ~/old # Delete specific session
-  session-nvim clean        # Remove stale locks
+  session-nvim               # Interactive menu
+  session-nvim open          # Interactive session picker
+  session-nvim goto          # Interactive session directory picker
+  session-nvim open frontend # Open session matching 'frontend'
+  session-nvim goto frontend # Go to directory matching 'frontend'
+  session-nvim open ~/proj   # Open directory (creates new session)
+  session-nvim delete ~/old  # Delete specific session
+  session-nvim clean         # Remove stale locks
 
 Notes:
   - 'open' supports pattern matching and directory creation
@@ -565,13 +651,13 @@ Notes:
 EOF
 }
 
-# Main session-nvim function
 session-nvim() {
     local command="$1"
     shift
     
     case "$command" in
         "open")    _session_nvim_open "$@" ;;
+        "goto")    _session_nvim_goto "$@" ;;
         "delete")  _session_nvim_delete "$@" ;;
         "clean")   _session_nvim_clean ;;
         ""|*)      
