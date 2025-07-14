@@ -103,8 +103,8 @@ Leader key is set to `<Space>` (space)
 - `<leader><leader>b` - Browse buffers
 - `<C-n>` - Toggle file tree
 - `<C-M-n>` - Toggle tree and find current file
-- `<leader>tt` - Toggle floating terminal
-- `<leader>tT` - Toggle horizontal terminal
+- `<C-t>` - Toggle floating terminal
+- `<C-M-t>` - Toggle horizontal terminal
 - `<leader>cc` - Copilot chat
 
 ### Buffer Management

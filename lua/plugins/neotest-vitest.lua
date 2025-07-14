@@ -225,14 +225,6 @@ return {
         neotest.run.stop()
       end, { desc = "Stop test run" })
 
-      vim.keymap.set("n", "<leader>tw", function()
-        neotest.watch.toggle()
-      end, { desc = "Toggle test watch mode" })
-
-      vim.keymap.set("n", "<leader>tW", function()
-        neotest.watch.toggle(vim.fn.expand("%"))
-      end, { desc = "Toggle watch for current file" })
-
       vim.keymap.set("n", "<leader>tc", function()
         neotest.state.clear()
       end, { desc = "Clear test results" })

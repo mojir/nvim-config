@@ -17,7 +17,7 @@ return {
           original_selection = nil,
           original_cursor = nil,
           original_win = nil,
-        }
+        },
       }
 
       require("toggleterm").setup({
@@ -66,19 +66,19 @@ return {
 
       local function save_visual_selection(mode)
         local current_cursor = vim.api.nvim_win_get_cursor(0)
-        
+
         -- For visual block mode, get virtual column BEFORE escaping
         local cursor_virtcol = nil
         if mode == VISUAL_BLOCK_MODE then
           cursor_virtcol = vim.fn.virtcol(".")
         end
-        
+
         -- Force update of visual marks
         vim.cmd("normal! \27") -- Escape
-        
+
         local start_pos = vim.fn.getpos("'<")
         local end_pos = vim.fn.getpos("'>")
-        
+
         local selection = {
           mode = mode,
           start_pos = start_pos,
@@ -93,7 +93,7 @@ return {
 
         -- Add virtual column info for visual block mode
         if mode == VISUAL_BLOCK_MODE then
-          selection.cursor_virtcol = cursor_virtcol  -- Use the one saved before escape
+          selection.cursor_virtcol = cursor_virtcol -- Use the one saved before escape
           selection.start_virtcol = vim.fn.virtcol("'<")
           selection.end_virtcol = vim.fn.virtcol("'>")
         end
@@ -108,36 +108,36 @@ return {
 
         -- Move to start position using virtual column
         vim.cmd(string.format("normal! %dG%d|", sel.start_line, sel.start_virtcol))
-        
+
         -- Enter visual block mode
         vim.cmd("normal! " .. VISUAL_BLOCK_MODE)
-        
+
         -- Move to end position using virtual column
         vim.cmd(string.format("normal! %dG%d|", sel.end_line, sel.end_virtcol))
-        
+
         -- Move cursor to original virtual column position (this is the key fix)
         vim.cmd(string.format("normal! %dG%d|", sel.cursor_line, sel.cursor_virtcol))
-        
+
         return true
       end
 
       local function restore_regular_visual_mode(sel)
         local mode_config = {
-          ["v"] = {sel.end_line, sel.end_col - 1},
-          ["V"] = {sel.end_line, 0},
-          [VISUAL_BLOCK_MODE] = {sel.end_line, sel.end_col - 1}
+          ["v"] = { sel.end_line, sel.end_col - 1 },
+          ["V"] = { sel.end_line, 0 },
+          [VISUAL_BLOCK_MODE] = { sel.end_line, sel.end_col - 1 },
         }
 
-        safe_call(vim.api.nvim_win_set_cursor, 0, {sel.start_line, sel.start_col - 1})
+        safe_call(vim.api.nvim_win_set_cursor, 0, { sel.start_line, sel.start_col - 1 })
         vim.cmd("normal! " .. sel.mode)
-        
+
         local end_pos = mode_config[sel.mode]
         if end_pos then
           safe_call(vim.api.nvim_win_set_cursor, 0, end_pos)
         end
 
         if sel.cursor_line and sel.cursor_col then
-          safe_call(vim.api.nvim_win_set_cursor, 0, {sel.cursor_line, sel.cursor_col})
+          safe_call(vim.api.nvim_win_set_cursor, 0, { sel.cursor_line, sel.cursor_col })
         end
       end
 
@@ -159,7 +159,7 @@ return {
         end
 
         safe_call(vim.api.nvim_set_current_win, M.terminal_state.original_win)
-        
+
         if M.terminal_state.original_cursor then
           safe_call(vim.api.nvim_win_set_cursor, 0, M.terminal_state.original_cursor)
         end
@@ -169,7 +169,9 @@ return {
 
       local function restore_mode()
         local mode = M.terminal_state.original_mode
-        if not mode then return end
+        if not mode then
+          return
+        end
 
         if M.terminal_state.original_selection then
           restore_visual_selection(M.terminal_state.original_selection)
@@ -192,10 +194,10 @@ return {
       local function save_state()
         M.terminal_state.original_win = vim.api.nvim_get_current_win()
         M.terminal_state.original_cursor = vim.api.nvim_win_get_cursor(0)
-        
+
         local mode = vim.fn.mode()
         M.terminal_state.original_mode = mode
-        
+
         if is_visual_mode(mode) then
           M.terminal_state.original_selection = save_visual_selection(mode)
         else
@@ -217,7 +219,7 @@ return {
       -- Terminal management
       local function safe_wqall()
         vim.cmd("wall")
-        
+
         for _, buf in ipairs(vim.api.nvim_list_bufs()) do
           if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buftype == "terminal" then
             local job_id = vim.b[buf].terminal_job_id
@@ -227,21 +229,21 @@ return {
             safe_call(vim.api.nvim_buf_delete, buf, { force = true })
           end
         end
-        
+
         vim.cmd("qall")
       end
 
       -- Global keymaps and functions
       function _G.set_terminal_keymaps()
         local opts = { buffer = 0, noremap = true, silent = true }
-        
+
         -- Navigation
         vim.keymap.set("t", "<esc>", [[<C-\><C-n>]], opts)
         vim.keymap.set("t", "<C-h>", [[<Cmd>wincmd h<CR>]], opts)
         vim.keymap.set("t", "<C-j>", [[<Cmd>wincmd j<CR>]], opts)
         vim.keymap.set("t", "<C-k>", [[<Cmd>wincmd k<CR>]], opts)
         vim.keymap.set("t", "<C-l>", [[<Cmd>wincmd l<CR>]], opts)
-        
+
         -- Mode keymaps
         vim.keymap.set("n", "i", "i", { buffer = 0 })
         vim.keymap.set("n", "a", "a", { buffer = 0 })
@@ -293,18 +295,43 @@ return {
         end
       end
 
-      -- Backwards compatibility
-      function _FLOAT_TOGGLE()
-        _G._ENHANCED_FLOAT_TOGGLE()
+      local horizontal_term = Terminal:new({
+        direction = "horizontal",
+        size = 15,
+        hidden = true,
+      })
+
+      function _G._HORIZONTAL_TOGGLE()
+        -- Check if we're currently in the horizontal terminal
+        if vim.bo.buftype == "terminal" then
+          vim.cmd("close")
+        else
+          horizontal_term:toggle()
+        end
       end
 
       -- Commands and keymaps
-      _G.safe_wqall = safe_wqall  -- Export globally for use in keybindings
-      vim.api.nvim_create_user_command("Wqall", safe_wqall, { bang = true, desc = "Write and quit all (terminal safe)" })
+      _G.safe_wqall = safe_wqall -- Export globally for use in keybindings
+      vim.api.nvim_create_user_command(
+        "Wqall",
+        safe_wqall,
+        { bang = true, desc = "Write and quit all (terminal safe)" }
+      )
       vim.cmd("cabbrev wqall Wqall")
-      
-      vim.keymap.set({"n", "v", "i"}, "<C-t>", _G._ENHANCED_FLOAT_TOGGLE, { desc = "Toggle floating terminal with state restoration" })
-      
+
+      vim.keymap.set(
+        { "n", "v", "i", "t" },
+        "<C-t>",
+        _G._ENHANCED_FLOAT_TOGGLE,
+        { desc = "Toggle floating terminal with state restoration" }
+      )
+      vim.keymap.set(
+        { "n", "v", "i", "t" },
+        "<C-M-t>",
+        _G._HORIZONTAL_TOGGLE,
+        { desc = "Toggle floating terminal with state restoration" }
+      )
+
       -- Cleanup
       vim.api.nvim_create_autocmd("VimLeavePre", {
         group = vim.api.nvim_create_augroup("TerminalCleanup", { clear = true }),
